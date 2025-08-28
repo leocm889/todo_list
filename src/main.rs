@@ -1,11 +1,13 @@
 use std::{collections::HashMap, io};
 use uuid::Uuid;
 
-mod task;
-use crate::task::Task;
+mod priority;
+mod status;
+mod todo;
+use crate::todo::Todo;
 
 fn main() {
-    let mut todos: HashMap<Uuid, Task> = HashMap::new();
+    let mut todos: HashMap<Uuid, Todo> = HashMap::new();
     println!("Welcome to todo list system");
 
     loop {

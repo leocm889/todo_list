@@ -4,46 +4,12 @@ use std::{
     io,
 };
 
+use crate::priority::Priority;
+use crate::status::Status;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Priority {
-    High,
-    Medium,
-    Low,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Status {
-    Pending,
-    InProgress,
-    Done,
-}
-
-impl Display for Priority {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let label = match self {
-            Priority::High => "High",
-            Priority::Medium => "Medium",
-            Priority::Low => "Low",
-        };
-        write!(f, "{label}")
-    }
-}
-
-impl Display for Status {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let label = match self {
-            Status::Pending => "Pending",
-            Status::InProgress => "In Progress",
-            Status::Done => "Done",
-        };
-        write!(f, "{label}")
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
-pub struct Task {
+pub struct Todo {
     id: Uuid,
     title: String,
     description: String,
@@ -51,7 +17,7 @@ pub struct Task {
     status: Status,
 }
 
-impl Display for Task {
+impl Display for Todo {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
@@ -61,7 +27,7 @@ impl Display for Task {
     }
 }
 
-impl Task {
+impl Todo {
     pub fn new(title: String, description: String, priority: Priority, status: Status) -> Self {
         Self {
             id: Uuid::new_v4(),
@@ -73,18 +39,22 @@ impl Task {
     }
 }
 
-pub fn add_task(todos: &mut HashMap<Uuid, Task>) {
-    loop {
-        println!("Enter title");
+pub fn add_todo(todos: &mut HashMap<Uuid, Todo>) {
+    println!("Enter title");
 
-        let title = input_trimmed();
+    let title = input_trimmed();
 
-        println!("Enter description");
+    println!("Enter description");
 
-        let description = input_trimmed();
+    let description = input_trimmed();
 
-        let priority = read_priority();
-    }
+    let priority = read_priority();
+
+    let status = read_status();
+
+    let todo = Todo::new(title, description, priority, status);
+    todos.insert(todo.id, todo);
+    println!("Todo added successfully.");
 }
 
 fn read_priority() -> Priority {
@@ -100,7 +70,7 @@ fn read_priority() -> Priority {
             .read_line(&mut choice)
             .expect("Failed to read line");
 
-        let mut choice: u32 = match choice.trim().parse() {
+        let choice: u32 = match choice.trim().parse() {
             Ok(num) => num,
             Err(_) => {
                 println!("Please enter a number");
@@ -112,6 +82,39 @@ fn read_priority() -> Priority {
             1 => return Priority::High,
             2 => return Priority::Medium,
             3 => return Priority::Low,
+            _ => {
+                println!("Invalid choice, try again.");
+                continue;
+            }
+        };
+    }
+}
+
+fn read_status() -> Status {
+    loop {
+        println!("Choose status:");
+        println!("1. Pending");
+        println!("2. In Progress");
+        println!("3. Done");
+
+        let mut choice = String::new();
+
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Failed to read line");
+
+        let choice: u32 = match choice.trim().parse() {
+            Ok(num) => num,
+            Err(_) => {
+                println!("Please enter a number");
+                continue;
+            }
+        };
+
+        match choice {
+            1 => return Status::Pending,
+            2 => return Status::InProgress,
+            3 => return Status::Done,
             _ => {
                 println!("Invalid choice, try again.");
                 continue;
