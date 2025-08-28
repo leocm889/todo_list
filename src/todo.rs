@@ -1,11 +1,13 @@
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, Result},
+    hash::Hash,
     io,
 };
 
 use crate::priority::Priority;
 use crate::status::Status;
+use chrono::{NaiveDateTime, Utc};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,6 +17,7 @@ pub struct Todo {
     description: String,
     priority: Priority,
     status: Status,
+    created_at: NaiveDateTime,
 }
 
 impl Display for Todo {
@@ -35,6 +38,7 @@ impl Todo {
             description,
             priority,
             status,
+            created_at: Utc::now().naive_utc(),
         }
     }
 }
@@ -55,6 +59,147 @@ pub fn add_todo(todos: &mut HashMap<Uuid, Todo>) {
     let todo = Todo::new(title, description, priority, status);
     todos.insert(todo.id, todo);
     println!("Todo added successfully.");
+}
+
+pub fn retrieve_todos_sorted(todos: &HashMap<Uuid, Todo>) {
+    loop {
+        if todos.is_empty() {
+            println!("No todos in your list yet.");
+            return;
+        }
+
+        println!("Sort todos by: ");
+        println!("1. Priority");
+        println!("2. Status");
+        println!("3. Creation order");
+
+        let mut choice = String::new();
+
+        let mut todo_list: Vec<&Todo> = todos.values().collect();
+
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Failed to read line");
+
+        let choice: u32 = match choice.trim().parse() {
+            Ok(num) => num,
+            Err(_) => {
+                println!("Please enter a number");
+                continue;
+            }
+        };
+
+        match choice {
+            1 => {
+                todo_list.sort_by_key(|t| t.priority.clone());
+            }
+            2 => {
+                todo_list.sort_by_key(|t| t.status.clone());
+            }
+            3 => {
+                todo_list.sort_by_key(|t| t.created_at.clone());
+            }
+            _ => {
+                println!("Invalid choice, displaying in default creation order.");
+            }
+        }
+
+        println!("--- Todos ---");
+        for todo in todos.values() {
+            println!("{todo}");
+        }
+    }
+}
+
+pub fn search_todos<F>(todos: &HashMap<Uuid, Todo>, predicate: F)
+where
+    F: Fn(&Todo) -> bool,
+{
+    let results: Vec<&Todo> = todos.values().filter(|todo| predicate(todo)).collect();
+
+    if results.is_empty() {
+        println!("No todos found matching the criteria.");
+    } else {
+        println!("Found {} todo(s):", results.len());
+        for todo in results {
+            println!("{todo}");
+        }
+    }
+}
+
+pub fn search_todo_by_id(todos: &HashMap<Uuid, Todo>, id: Uuid) {
+    match todos.get(&id) {
+        Some(todo) => println!("Todo found:\n{todo}"),
+        None => println!("No item found with ID: {id}"),
+    }
+}
+
+pub fn search_todo_by_title(todos: &HashMap<Uuid, Todo>, query: &str) {
+    let query_lower = query.to_lowercase();
+    search_todos(todos, |todo| {
+        todo.title.to_lowercase().contains(&query_lower)
+    });
+}
+
+pub fn search_todo_by_priority(todos: &HashMap<Uuid, Todo>, priority: Priority) {
+    search_todos(todos, |todo| todo.priority == priority);
+}
+
+pub fn search_todo_by_status(todos: &HashMap<Uuid, Todo>, status: Status) {
+    search_todos(todos, |todo| todo.status == status);
+}
+
+pub fn search_menu(todos: &HashMap<Uuid, Todo>) {
+    loop {
+        println!("Search by:");
+        println!("1. ID");
+        println!("2. Title");
+        println!("3. Priority");
+        println!("4. Status");
+        println!("5. Back to main menu");
+
+        let mut choice = String::new();
+
+        io::stdin()
+            .read_line(&mut choice)
+            .expect("Failed to read line");
+
+        let choice: u32 = match choice.trim().parse() {
+            Ok(num) => num,
+            Err(_) => {
+                println!("Please enter a number");
+                continue;
+            }
+        };
+
+        match choice {
+            1 => {
+                println!("Enter the ID to search:");
+                let id_input = input_trimmed();
+                match Uuid::parse_str(&id_input) {
+                    Ok(id) => {
+                        search_todo_by_id(todos, id);
+                    }
+                    Err(_) => println!("Invalid UUID format."),
+                }
+            }
+            2 => {
+                println!("Enter the title of the todo to search:");
+                let title_query = input_trimmed();
+                search_todo_by_title(todos, &title_query);
+            }
+            3 => {
+                let priority = read_priority();
+                search_todo_by_priority(todos, priority);
+            }
+            4 => {
+                let status = read_status();
+                search_todo_by_status(todos, status);
+            }
+            5 => break,
+            _ => println!("Invalid choice, try again."),
+        }
+    }
 }
 
 fn read_priority() -> Priority {
