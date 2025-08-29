@@ -4,7 +4,7 @@ use uuid::Uuid;
 mod priority;
 mod status;
 mod todo;
-use crate::todo::Todo;
+use crate::todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo, Todo};
 
 fn main() {
     let mut todos: HashMap<Uuid, Todo> = HashMap::new();
@@ -33,5 +33,21 @@ fn main() {
                 continue;
             }
         };
+
+        match choice {
+            1 => add_todo(&mut todos),
+            2 => retrieve_todos_sorted(&todos),
+            3 => search_menu(&todos),
+            4 => update_todo(&mut todos),
+            5 => delete_todo(&mut todos),
+            6 => {
+                println!("Goodbye! 👋");
+                break;
+            }
+            _ => {
+                println!("Invalid choice, try again.");
+                continue;
+            }
+        }
     }
 }

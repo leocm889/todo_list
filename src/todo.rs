@@ -1,16 +1,17 @@
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, Result},
-    hash::Hash,
+    fs::read,
     io,
 };
 
 use crate::priority::Priority;
 use crate::status::Status;
 use chrono::{NaiveDateTime, Utc};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Todo {
     id: Uuid,
     title: String,
@@ -72,6 +73,7 @@ pub fn retrieve_todos_sorted(todos: &HashMap<Uuid, Todo>) {
         println!("1. Priority");
         println!("2. Status");
         println!("3. Creation order");
+        println!("4. Back to main menu");
 
         let mut choice = String::new();
 
@@ -99,13 +101,14 @@ pub fn retrieve_todos_sorted(todos: &HashMap<Uuid, Todo>) {
             3 => {
                 todo_list.sort_by_key(|t| t.created_at.clone());
             }
+            4 => break,
             _ => {
                 println!("Invalid choice, displaying in default creation order.");
             }
         }
 
         println!("--- Todos ---");
-        for todo in todos.values() {
+        for todo in &todo_list {
             println!("{todo}");
         }
     }
@@ -202,6 +205,66 @@ pub fn search_menu(todos: &HashMap<Uuid, Todo>) {
     }
 }
 
+pub fn update_todo(todos: &mut HashMap<Uuid, Todo>) {
+    println!("Please enter the id of the todo you would like to update:");
+    let id_input = input_trimmed();
+    match Uuid::parse_str(&id_input) {
+        Ok(id) => {
+            if let Some(todo) = todos.get_mut(&id) {
+                println!("Updating todo: \n{todo}");
+
+                println!("Enter new title (or press Enter to keep '{}'):", todo.title);
+                let title = input_trimmed();
+                if !title.is_empty() {
+                    todo.title = title;
+                }
+
+                println!(
+                    "Enter new description (or press Enter to keep '{}'):",
+                    todo.description
+                );
+
+                let description = input_trimmed();
+                if !description.is_empty() {
+                    todo.description = description;
+                }
+
+                println!("Do you want to update priority? (y/n)");
+                let choice = input_trimmed();
+                if choice.eq_ignore_ascii_case("y") {
+                    todo.priority = read_priority();
+                }
+
+                println!("Do you want to update status? (y/n)");
+                let choice = input_trimmed();
+                if choice.eq_ignore_ascii_case("y") {
+                    todo.status = read_status();
+                }
+
+                println!("Todo updated successfully.");
+            } else {
+                println!("No todo found with ID: {id}");
+            }
+        }
+        Err(_) => println!("Invalid UUID format."),
+    }
+}
+
+pub fn delete_todo(todos: &mut HashMap<Uuid, Todo>) {
+    println!("Please enter the id of the todo you would like to delete:");
+    let id_input = input_trimmed();
+    match Uuid::parse_str(&id_input) {
+        Ok(id) => {
+            if todos.remove(&id).is_some() {
+                println!("Todo deleted successfully");
+            } else {
+                println!("No todo found with id: {id}");
+            }
+        }
+        Err(_) => println!("Invalid UUID format."),
+    }
+}
+
 fn read_priority() -> Priority {
     loop {
         println!("Choose priority");
@@ -276,3 +339,5 @@ fn input_trimmed() -> String {
         .expect("Failed to read line");
     input.trim().to_string()
 }
+
+pub fn save_todos_to_file(todos: &HashMap<Uuid, Todo>, file_path: &str) {}
