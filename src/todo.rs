@@ -1,8 +1,8 @@
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter, Result},
-    fs::read,
-    io,
+    fs::{self, File},
+    io::{self, Write},
 };
 
 use crate::priority::Priority;
@@ -44,14 +44,23 @@ impl Todo {
     }
 }
 
-pub fn add_todo(todos: &mut HashMap<Uuid, Todo>) {
+pub fn add_todo(file_path: &str) {
+    let mut todos = load_todos_from_file(file_path);
+
+    let id = Uuid::new_v4();
+
+    if todos.contains_key(&id) {
+        println!("A todo with this ID already exists. Try again.");
+        return;
+    }
+
     println!("Enter title");
 
-    let title = input_trimmed();
+    let title = read_input::<String>();
 
     println!("Enter description");
 
-    let description = input_trimmed();
+    let description = read_input::<String>();
 
     let priority = read_priority();
 
@@ -59,13 +68,18 @@ pub fn add_todo(todos: &mut HashMap<Uuid, Todo>) {
 
     let todo = Todo::new(title, description, priority, status);
     todos.insert(todo.id, todo);
+
+    save_todos_to_file(&todos, file_path);
+
     println!("Todo added successfully.");
 }
 
-pub fn retrieve_todos_sorted(todos: &HashMap<Uuid, Todo>) {
+pub fn retrieve_todos_sorted(file_path: &str) {
     loop {
+        let todos = load_todos_from_file(file_path);
+
         if todos.is_empty() {
-            println!("No todos in your list yet.");
+            println!("No todos found.");
             return;
         }
 
@@ -114,10 +128,17 @@ pub fn retrieve_todos_sorted(todos: &HashMap<Uuid, Todo>) {
     }
 }
 
-pub fn search_todos<F>(todos: &HashMap<Uuid, Todo>, predicate: F)
+pub fn search_todos<F>(file_path: &str, predicate: F)
 where
     F: Fn(&Todo) -> bool,
 {
+    let todos = load_todos_from_file(file_path);
+
+    if todos.is_empty() {
+        println!("No todos found. The file is empty.");
+        return;
+    }
+
     let results: Vec<&Todo> = todos.values().filter(|todo| predicate(todo)).collect();
 
     if results.is_empty() {
@@ -130,29 +151,26 @@ where
     }
 }
 
-pub fn search_todo_by_id(todos: &HashMap<Uuid, Todo>, id: Uuid) {
-    match todos.get(&id) {
-        Some(todo) => println!("Todo found:\n{todo}"),
-        None => println!("No item found with ID: {id}"),
-    }
+pub fn search_todo_by_id(file_path: &str, id: Uuid) {
+    search_todos(file_path, move |todo| todo.id == id);
 }
 
-pub fn search_todo_by_title(todos: &HashMap<Uuid, Todo>, query: &str) {
+pub fn search_todo_by_title(file_path: &str, query: &str) {
     let query_lower = query.to_lowercase();
-    search_todos(todos, |todo| {
+    search_todos(file_path, move |todo| {
         todo.title.to_lowercase().contains(&query_lower)
     });
 }
 
-pub fn search_todo_by_priority(todos: &HashMap<Uuid, Todo>, priority: Priority) {
-    search_todos(todos, |todo| todo.priority == priority);
+pub fn search_todo_by_priority(file_path: &str, priority: Priority) {
+    search_todos(file_path, move |todo| todo.priority == priority);
 }
 
-pub fn search_todo_by_status(todos: &HashMap<Uuid, Todo>, status: Status) {
-    search_todos(todos, |todo| todo.status == status);
+pub fn search_todo_by_status(file_path: &str, status: Status) {
+    search_todos(file_path, move |todo| todo.status == status);
 }
 
-pub fn search_menu(todos: &HashMap<Uuid, Todo>) {
+pub fn search_menu(file_path: &str) {
     loop {
         println!("Search by:");
         println!("1. ID");
@@ -178,26 +196,26 @@ pub fn search_menu(todos: &HashMap<Uuid, Todo>) {
         match choice {
             1 => {
                 println!("Enter the ID to search:");
-                let id_input = input_trimmed();
+                let id_input = read_input::<String>();
                 match Uuid::parse_str(&id_input) {
                     Ok(id) => {
-                        search_todo_by_id(todos, id);
+                        search_todo_by_id(file_path, id);
                     }
                     Err(_) => println!("Invalid UUID format."),
                 }
             }
             2 => {
                 println!("Enter the title of the todo to search:");
-                let title_query = input_trimmed();
-                search_todo_by_title(todos, &title_query);
+                let title_query = read_input::<String>();
+                search_todo_by_title(file_path, &title_query);
             }
             3 => {
                 let priority = read_priority();
-                search_todo_by_priority(todos, priority);
+                search_todo_by_priority(file_path, priority);
             }
             4 => {
                 let status = read_status();
-                search_todo_by_status(todos, status);
+                search_todo_by_status(file_path, status);
             }
             5 => break,
             _ => println!("Invalid choice, try again."),
@@ -205,17 +223,24 @@ pub fn search_menu(todos: &HashMap<Uuid, Todo>) {
     }
 }
 
-pub fn update_todo(todos: &mut HashMap<Uuid, Todo>) {
+pub fn update_todo(file_path: &str) {
+    let mut todos = load_todos_from_file(file_path);
+
+    if todos.is_empty() {
+        println!("No todos found. The file is empty.");
+        return;
+    }
+
     println!("Please enter the id of the todo you would like to update:");
-    let id_input = input_trimmed();
+    let id_input = read_input::<String>();
     match Uuid::parse_str(&id_input) {
         Ok(id) => {
             if let Some(todo) = todos.get_mut(&id) {
                 println!("Updating todo: \n{todo}");
 
                 println!("Enter new title (or press Enter to keep '{}'):", todo.title);
-                let title = input_trimmed();
-                if !title.is_empty() {
+                let title = read_optional_input::<String>();
+                if let Some(title) = title {
                     todo.title = title;
                 }
 
@@ -224,23 +249,24 @@ pub fn update_todo(todos: &mut HashMap<Uuid, Todo>) {
                     todo.description
                 );
 
-                let description = input_trimmed();
-                if !description.is_empty() {
+                let description = read_optional_input::<String>();
+                if let Some(description) = description {
                     todo.description = description;
                 }
 
                 println!("Do you want to update priority? (y/n)");
-                let choice = input_trimmed();
+                let choice = read_input::<String>();
                 if choice.eq_ignore_ascii_case("y") {
                     todo.priority = read_priority();
                 }
 
                 println!("Do you want to update status? (y/n)");
-                let choice = input_trimmed();
+                let choice = read_input::<String>();
                 if choice.eq_ignore_ascii_case("y") {
                     todo.status = read_status();
                 }
 
+                save_todos_to_file(&todos, file_path);
                 println!("Todo updated successfully.");
             } else {
                 println!("No todo found with ID: {id}");
@@ -250,12 +276,19 @@ pub fn update_todo(todos: &mut HashMap<Uuid, Todo>) {
     }
 }
 
-pub fn delete_todo(todos: &mut HashMap<Uuid, Todo>) {
+pub fn delete_todo(file_path: &str) {
+    let mut todos = load_todos_from_file(file_path);
+
+    if todos.is_empty() {
+        println!("No todos found. The file is empty.");
+        return;
+    }
     println!("Please enter the id of the todo you would like to delete:");
-    let id_input = input_trimmed();
+    let id_input = read_input::<String>();
     match Uuid::parse_str(&id_input) {
         Ok(id) => {
             if todos.remove(&id).is_some() {
+                save_todos_to_file(&todos, file_path);
                 println!("Todo deleted successfully");
             } else {
                 println!("No todo found with id: {id}");
@@ -331,13 +364,52 @@ fn read_status() -> Status {
     }
 }
 
-fn input_trimmed() -> String {
+pub fn read_input<T: std::str::FromStr>() -> T {
     let mut input = String::new();
-
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Failed to read line");
-    input.trim().to_string()
+    std::io::stdin().read_line(&mut input).unwrap();
+    input.trim().parse().ok().expect("Invalid input, try again")
 }
 
-pub fn save_todos_to_file(todos: &HashMap<Uuid, Todo>, file_path: &str) {}
+pub fn read_optional_input<T: std::str::FromStr>() -> Option<T> {
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input).unwrap();
+    let trimmed = input.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        trimmed.parse().ok()
+    }
+}
+
+pub fn save_todos_to_file(todos: &HashMap<Uuid, Todo>, file_path: &str) {
+    match File::create(file_path) {
+        Ok(mut file) => {
+            let json = serde_json::to_string_pretty(todos).unwrap();
+            if let Err(error) = file.write_all(json.as_bytes()) {
+                eprintln!("Failed to write to file: {error}");
+            } else {
+                println!("Todos saved successfully to {file_path}");
+            }
+        }
+        Err(error) => eprintln!("Failed to create file: {error}"),
+    }
+}
+
+pub fn load_todos_from_file(file_path: &str) -> HashMap<Uuid, Todo> {
+    match fs::read_to_string(file_path) {
+        Ok(data) => match serde_json::from_str::<HashMap<Uuid, Todo>>(&data) {
+            Ok(todos) => {
+                println!("Todos loaded successfully from {file_path}");
+                todos
+            }
+            Err(error) => {
+                eprintln!("Failed to parse JSON: {error}");
+                HashMap::new()
+            }
+        },
+        Err(_) => {
+            println!("File not found, starting with an empty list of todos.");
+            HashMap::new()
+        }
+    }
+}
