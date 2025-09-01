@@ -1,6 +1,3 @@
-use std::{collections::HashMap, io};
-use uuid::Uuid;
-
 mod menu;
 mod priority;
 mod status;

@@ -13,12 +13,12 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Todo {
-    id: Uuid,
-    title: String,
-    description: String,
-    priority: Priority,
-    status: Status,
-    created_at: NaiveDateTime,
+    pub id: Uuid,
+    pub title: String,
+    pub description: String,
+    pub priority: Priority,
+    pub status: Status,
+    pub created_at: NaiveDateTime,
 }
 
 impl Display for Todo {
