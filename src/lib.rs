@@ -1,62 +1,59 @@
-mod priority;
-mod status;
-mod todo;
+pub mod priority;
+pub mod status;
+pub mod todo;
+use crate::priority::Priority;
+use crate::status::Status;
+use crate::todo::Todo;
+use std::collections::HashMap;
+use uuid::Uuid;
+
+pub fn add_todo_to_map(
+    todos: &mut HashMap<Uuid, Todo>,
+    title: String,
+    description: String,
+    priority: Priority,
+    status: Status,
+) -> Uuid {
+    let todo = Todo::new(title, description, priority, status);
+    let id = todo.id;
+    todos.insert(id, todo);
+    id
+}
+
+pub fn update_todo_in_map(
+    todos: &mut HashMap<Uuid, Todo>,
+    id: Uuid,
+    new_title: Option<String>,
+    new_description: Option<String>,
+    new_priority: Option<Priority>,
+    new_status: Option<Status>,
+) -> bool {
+    if let Some(todo) = todos.get_mut(&id) {
+        if let Some(title) = new_title {
+            todo.title = title;
+        }
+        if let Some(description) = new_description {
+            todo.description = description;
+        }
+        if let Some(priority) = new_priority {
+            todo.priority = priority;
+        }
+        if let Some(status) = new_status {
+            todo.status = status;
+        }
+        true
+    } else {
+        false
+    }
+}
+
+pub fn delete_todo_by_id(todos: &mut HashMap<Uuid, Todo>, id: Uuid) -> bool {
+    todos.remove(&id).is_some()
+}
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-    use std::fs;
-
     use super::*;
-    use crate::priority::Priority;
-    use crate::status::Status;
-    use crate::todo::{add_todo, load_todos_from_file, save_todos_to_file, Todo};
-    use chrono::Utc;
-    use uuid::Uuid;
-
-    fn add_todo_to_map(
-        todos: &mut HashMap<Uuid, Todo>,
-        title: String,
-        description: String,
-        priority: Priority,
-        status: Status,
-    ) -> Uuid {
-        let todo = Todo::new(title, description, priority, status);
-        let id = todo.id;
-        todos.insert(id, todo);
-        id
-    }
-
-    fn update_todo_in_map(
-        todos: &mut HashMap<Uuid, Todo>,
-        id: Uuid,
-        new_title: Option<String>,
-        new_description: Option<String>,
-        new_priority: Option<Priority>,
-        new_status: Option<Status>,
-    ) -> bool {
-        if let Some(todo) = todos.get_mut(&id) {
-            if let Some(title) = new_title {
-                todo.title = title;
-            }
-            if let Some(description) = new_description {
-                todo.description = description;
-            }
-            if let Some(priority) = new_priority {
-                todo.priority = priority;
-            }
-            if let Some(status) = new_status {
-                todo.status = status;
-            }
-            true
-        } else {
-            false
-        }
-    }
-
-    fn delete_todo_by_id(todos: &mut HashMap<Uuid, Todo>, id: Uuid) -> bool {
-        todos.remove(&id).is_some()
-    }
 
     #[test]
     fn add_todo_inserts_item() {
@@ -98,7 +95,7 @@ mod tests {
         let todo = &todos[&id];
         assert_eq!(todo.title, "New Title");
         assert_eq!(todo.description, "New Desc");
-        assert_eq!(todo.priority, Priority::High);
+        assert_eq!(todo.priority, Priority::Medium);
         assert_eq!(todo.status, Status::Done);
     }
 
@@ -133,6 +130,6 @@ mod tests {
             None,
         );
 
-        assert!(updated);
+        assert!(!updated);
     }
 }

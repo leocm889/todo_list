@@ -1,6 +1,5 @@
 use crate::todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo, Todo};
-use std::{collections::HashMap, io};
-use uuid::Uuid;
+use std::io;
 
 pub fn display_menu(file_path: &str) {
     println!("Welcome to todo list system");
