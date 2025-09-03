@@ -1,32 +1,71 @@
-use clap::{Parser, Subcommand};
+use clap::Parser;
+mod cli;
 mod menu;
 mod priority;
 mod status;
+mod storage;
 mod todo;
+mod todo_cli;
+mod utils;
 use menu::display_menu;
+use uuid::Uuid;
+
+use crate::cli::{Cli, Commands};
+use crate::todo::retrieve_todos_sorted;
+use crate::todo_cli::{add_todo_cli, delete_todo_cli, update_todo_cli};
+use crate::utils::{parse_priority, parse_status};
 
 fn main() {
     let file_path = "todos.json";
-    display_menu(file_path);
-}
+    let cli = Cli::parse();
 
-#[derive(Parser)]
-#[command(name = "todo")]
-#[command(about = "A simple todo shell program", long_about = None)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
+    if cli.menu {
+        display_menu(file_path);
+        return;
+    }
 
-#[derive(Subcommand)]
-enum Commands {
-    Add {
-        title: String,
-        description: String,
-        #[arg(long, default_value = "medium")]
-        priority: String,
-        #[arg(long, default_value = "pending")]
-        status: String,
-    },
-    List,
+    match cli.command {
+        Some(Commands::Add {
+            title,
+            description,
+            priority,
+            status,
+        }) => {
+            let priority = parse_priority(&priority);
+            let status = parse_status(&status);
+
+            add_todo_cli(file_path, title, description, priority, status);
+        }
+        Some(Commands::List) => {
+            retrieve_todos_sorted(file_path);
+        }
+        Some(Commands::Update {
+            id,
+            title,
+            description,
+            priority,
+            status,
+        }) => {
+            let id = Uuid::parse_str(&id).expect("Invalid UUID");
+            let priority = priority.map(|p| parse_priority(&p));
+            let status = status.map(|s| parse_status(&s));
+
+            if update_todo_cli(file_path, id, title, description, priority, status) {
+                println!("✅ Task updated");
+            } else {
+                println!("⚠️ No task found with id {id}");
+            }
+        }
+        Some(Commands::Delete { id }) => {
+            let id = Uuid::parse_str(&id).expect("Invalid UUID");
+            if delete_todo_cli(file_path, id) {
+                println!("🗑️ Task deleted");
+            } else {
+                println!("⚠️ No task found with id {id}");
+            }
+        }
+        None => {
+            println!("No command provided. Use --help for usage.");
+        }
+    }
 }

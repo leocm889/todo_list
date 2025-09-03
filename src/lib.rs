@@ -1,5 +1,6 @@
 pub mod priority;
 pub mod status;
+pub mod storage;
 pub mod todo;
 use crate::priority::Priority;
 use crate::status::Status;
