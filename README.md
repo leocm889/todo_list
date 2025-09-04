@@ -7,7 +7,7 @@ Supports **interactive mode** and **command-line mode** for maximum flexibility.
 
 ## ✨ Features
 
--- Add, view, update, search, and delete todos
+- Add, view, update, search, and delete todos
 - Store todos in a JSON file (`todos.json`)
 - Interactive menu mode (`--menu`) for guided use
 - Command-line interface (CLI) for quick commands
@@ -104,7 +104,7 @@ todo search --status done
 todo update <UUID> -- title "Buy bread" --status in_progress
 ```
 
-**Delete a todo
+**Delete a todo**
 
 ```bash
 todo delete <UUID>
