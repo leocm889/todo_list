@@ -21,7 +21,20 @@ pub enum Commands {
         #[arg(long, default_value = "pending")]
         status: String,
     },
-    List,
+    List {
+        #[arg(long, default_value = "created")]
+        sort_by: String,
+    },
+    Search {
+        #[arg(long)]
+        id: Option<String>,
+        #[arg(long)]
+        title: Option<String>,
+        #[arg(long)]
+        priority: Option<String>,
+        #[arg(long)]
+        status: Option<String>,
+    },
     Update {
         id: String,
         #[arg(long)]

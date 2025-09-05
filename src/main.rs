@@ -11,8 +11,9 @@ use menu::display_menu;
 use uuid::Uuid;
 
 use crate::cli::{Cli, Commands};
-use crate::todo::retrieve_todos_sorted;
-use crate::todo_cli::{add_todo_cli, delete_todo_cli, update_todo_cli};
+use crate::todo_cli::{
+    add_todo_cli, delete_todo_cli, list_todos_cli, search_todo_cli, update_todo_cli,
+};
 use crate::utils::{parse_priority, parse_status};
 
 fn main() {
@@ -36,8 +37,16 @@ fn main() {
 
             add_todo_cli(file_path, title, description, priority, status);
         }
-        Some(Commands::List) => {
-            retrieve_todos_sorted(file_path);
+        Some(Commands::List { sort_by }) => {
+            list_todos_cli(file_path, &sort_by);
+        }
+        Some(Commands::Search {
+            id,
+            title,
+            priority,
+            status,
+        }) => {
+            search_todo_cli(file_path, id, title, priority, status);
         }
         Some(Commands::Update {
             id,

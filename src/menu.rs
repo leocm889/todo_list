@@ -1,4 +1,4 @@
-use crate::todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo, Todo};
+use crate::todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo};
 use std::io;
 
 pub fn display_menu(file_path: &str) {

@@ -106,13 +106,13 @@ pub fn retrieve_todos_sorted(file_path: &str) {
 
         match choice {
             1 => {
-                todo_list.sort_by_key(|t| t.priority.clone());
+                todo_list.sort_by_key(|t| t.priority);
             }
             2 => {
-                todo_list.sort_by_key(|t| t.status.clone());
+                todo_list.sort_by_key(|t| t.status);
             }
             3 => {
-                todo_list.sort_by_key(|t| t.created_at.clone());
+                todo_list.sort_by_key(|t| t.created_at);
             }
             4 => break,
             _ => {
