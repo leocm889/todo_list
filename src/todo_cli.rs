@@ -17,20 +17,25 @@ pub fn add_todo_cli(
     let todo = Todo::new(title, description, priority, status);
 
     if todos.contains_key(&todo.id) {
-        println!("A todo with this ID already exists. Try again.");
+        println!(
+            "{}",
+            "❌ A todo with this ID already exists. Try again."
+                .red()
+                .bold()
+        );
         return;
     }
 
     todos.insert(todo.id, todo);
     save_todos_to_file(&todos, file_path);
-    println!("✅ Todo added successfully");
+    println!("{}", "✅ Todo added successfully".green().bold());
 }
 
 pub fn list_todos_cli(file_path: &str, sort_by: &str) {
     let todos = load_todos_from_file(file_path);
 
     if todos.is_empty() {
-        println!("No todos found.");
+        println!("{}", "❌ No todos found.".red().bold());
         return;
     }
 
@@ -79,7 +84,7 @@ pub fn list_todos_cli(file_path: &str, sort_by: &str) {
         println!("{:<10} {}", "Status:".bold(), status_color);
         println!("{:<10} {}", "Description:".bold(), todo.description);
         println!("{:<10} {}", "Created:".bold(), todo.created_at);
-        println!("\n");
+        println!();
     }
 }
 
@@ -97,7 +102,7 @@ pub fn search_todo_cli(
         if let Ok(uuid) = Uuid::parse_str(&id_str) {
             results.retain(|t| t.id == uuid);
         } else {
-            println!("⚠️Invalid UUID format: {id_str}");
+            println!("{}", format!("⚠️ Invalid UUID format: {id_str}").red());
             return;
         }
     }
@@ -118,11 +123,35 @@ pub fn search_todo_cli(
     }
 
     if results.is_empty() {
-        println!("⚠️ No todos found with the given filters.");
+        println!("{}", "⚠️ No todos found with the given filters.".yellow());
     } else {
-        println!("Found {} todo(s):", results.len());
+        println!(
+            "{}",
+            format!("Found {} todo(s):", results.len()).bold().blue()
+        );
         for todo in results {
-            println!("{todo}");
+            let priority_str = todo.priority.to_string();
+            let priority_color = match priority_str.as_str() {
+                "High" => priority_str.red().bold(),
+                "Medium" => priority_str.yellow(),
+                "Low" => priority_str.green(),
+                _ => priority_str.normal(),
+            };
+
+            let status_str = todo.status.to_string();
+            let status_color = match status_str.as_str() {
+                "Pending" => status_str.red().bold(),
+                "In Progress" => status_str.yellow(),
+                "Done" => status_str.green(),
+                _ => status_str.normal(),
+            };
+            println!("{:<10} {}", "ID:".bold(), todo.id.to_string().cyan());
+            println!("{:<10} {}", "Title:".bold(), todo.title.bold());
+            println!("{:<10} {}", "Priority:".bold(), priority_color);
+            println!("{:<10} {}", "Status:".bold(), status_color);
+            println!("{:<10} {}", "Description:".bold(), todo.description);
+            println!("{:<10} {}", "Created:".bold(), todo.created_at);
+            println!();
         }
     }
 }

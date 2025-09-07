@@ -1,4 +1,5 @@
 use crate::{priority::Priority, status::Status};
+use colored::*;
 
 pub fn parse_priority(p: &str) -> Priority {
     match p.to_lowercase().as_str() {
@@ -6,7 +7,12 @@ pub fn parse_priority(p: &str) -> Priority {
         "medium" => Priority::Medium,
         "high" => Priority::High,
         _ => {
-            println!("⚠️ Unknown priority {p}, defaulting to Medium");
+            println!(
+                "{}",
+                format!("⚠️ Unknown priority {p}, defaulting to Medium")
+                    .yellow()
+                    .bold()
+            );
             Priority::Medium
         }
     }
@@ -18,7 +24,12 @@ pub fn parse_status(s: &str) -> Status {
         "inprogress" | "in_progress" => Status::InProgress,
         "done" => Status::Done,
         _ => {
-            println!("⚠️Unknown status {s}, defaulting to Pending");
+            println!(
+                "{}",
+                format!("⚠️Unknown status {s}, defaulting to Pending")
+                    .yellow()
+                    .bold()
+            );
             Status::Pending
         }
     }

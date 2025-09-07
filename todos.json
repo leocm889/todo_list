@@ -7,13 +7,13 @@
     "status": "InProgress",
     "created_at": "2025-08-30T12:34:39.761503235"
   },
-  "56c97e37-03b8-45e4-8a7c-12f0d9765524": {
-    "id": "56c97e37-03b8-45e4-8a7c-12f0d9765524",
-    "title": "Buy milk",
-    "description": "from the store",
-    "priority": "High",
+  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
+    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
+    "title": "Sell to client course",
+    "description": "sell to my client the course on how to build an aesthetic physique",
+    "priority": "Medium",
     "status": "Pending",
-    "created_at": "2025-09-04T08:45:24.301993058"
+    "created_at": "2025-08-30T12:23:59.981678080"
   },
   "632eb08f-be4b-4550-a345-0f9cda860615": {
     "id": "632eb08f-be4b-4550-a345-0f9cda860615",
@@ -23,12 +23,20 @@
     "status": "Pending",
     "created_at": "2025-09-03T12:58:03.529514352"
   },
-  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
-    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
-    "title": "Sell to client course",
-    "description": "sell to my client the course on how to build an aesthetic physique",
-    "priority": "Medium",
+  "b066d130-60b8-4b37-8b13-c1d3e5b5057e": {
+    "id": "b066d130-60b8-4b37-8b13-c1d3e5b5057e",
+    "title": "Cook",
+    "description": "Cook pasta to my family",
+    "priority": "High",
+    "status": "Done",
+    "created_at": "2025-09-07T19:35:35.164969130"
+  },
+  "56c97e37-03b8-45e4-8a7c-12f0d9765524": {
+    "id": "56c97e37-03b8-45e4-8a7c-12f0d9765524",
+    "title": "Buy milk",
+    "description": "from the store",
+    "priority": "High",
     "status": "Pending",
-    "created_at": "2025-08-30T12:23:59.981678080"
+    "created_at": "2025-09-04T08:45:24.301993058"
   }
 }

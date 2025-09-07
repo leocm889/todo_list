@@ -7,6 +7,7 @@ mod storage;
 mod todo;
 mod todo_cli;
 mod utils;
+use colored::*;
 use menu::display_menu;
 use uuid::Uuid;
 
@@ -55,26 +56,37 @@ fn main() {
             priority,
             status,
         }) => {
-            let id = Uuid::parse_str(&id).expect("Invalid UUID");
+            let id = Uuid::parse_str(&id).expect("❌ Invalid UUID".red().to_string().as_str());
             let priority = priority.map(|p| parse_priority(&p));
             let status = status.map(|s| parse_status(&s));
 
             if update_todo_cli(file_path, id, title, description, priority, status) {
-                println!("✅ Task updated");
+                println!("{}", "✅ Task updated successfully!".green().bold());
             } else {
-                println!("⚠️ No task found with id {id}");
+                println!(
+                    "{}",
+                    format!("⚠️ No task found with id {id}").yellow().bold()
+                );
             }
         }
         Some(Commands::Delete { id }) => {
-            let id = Uuid::parse_str(&id).expect("Invalid UUID");
+            let id = Uuid::parse_str(&id).expect("❌ Invalid UUID");
             if delete_todo_cli(file_path, id) {
-                println!("🗑️ Task deleted");
+                println!("{}", "🗑️ Task deleted".red().bold());
             } else {
-                println!("⚠️ No task found with id {id}");
+                println!(
+                    "{}",
+                    format!("⚠️ No task found with id {id}").yellow().bold()
+                );
             }
         }
         None => {
-            println!("No command provided. Use --help for usage.");
+            println!(
+                "{}",
+                "⚠️ No command provided. Use --help for usage."
+                    .yellow()
+                    .bold()
+            );
         }
     }
 }
