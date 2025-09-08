@@ -1,4 +1,5 @@
 use crate::priority::Priority;
+use crate::sortby::SortBy;
 use crate::status::Status;
 use crate::storage::{load_todos_from_file, save_todos_to_file};
 use crate::todo::Todo;
@@ -31,7 +32,7 @@ pub fn add_todo_cli(
     println!("{}", "✅ Todo added successfully".green().bold());
 }
 
-pub fn list_todos_cli(file_path: &str, sort_by: &str) {
+pub fn list_todos_cli(file_path: &str, sort_by: &SortBy) {
     let todos = load_todos_from_file(file_path);
 
     if todos.is_empty() {
@@ -41,17 +42,10 @@ pub fn list_todos_cli(file_path: &str, sort_by: &str) {
 
     let mut todo_list: Vec<&Todo> = todos.values().collect();
 
-    match sort_by.to_lowercase().as_str() {
-        "priority" => todo_list.sort_by_key(|t| t.priority),
-        "status" => todo_list.sort_by_key(|t| t.status),
-        "created" => todo_list.sort_by_key(|t| t.created_at),
-        _ => {
-            println!(
-                "{}",
-                format!("⚠️Unknown sort option '{sort_by}', defaulting to creation order.").red()
-            );
-            todo_list.sort_by_key(|t| t.created_at);
-        }
+    match sort_by {
+        SortBy::Priority => todo_list.sort_by_key(|t| t.priority),
+        SortBy::Status => todo_list.sort_by_key(|t| t.status),
+        SortBy::Created => todo_list.sort_by_key(|t| t.created_at),
     }
 
     println!(
@@ -92,8 +86,8 @@ pub fn search_todo_cli(
     file_path: &str,
     id: Option<String>,
     title: Option<String>,
-    priority: Option<String>,
-    status: Option<String>,
+    priority: Option<Priority>,
+    status: Option<Status>,
 ) {
     let todos = load_todos_from_file(file_path);
     let mut results: Vec<&Todo> = todos.values().collect();
@@ -112,13 +106,13 @@ pub fn search_todo_cli(
         results.retain(|t| t.title.to_lowercase().contains(&query_lower));
     }
 
-    if let Some(priority_str) = priority {
-        let p = super::parse_priority(&priority_str);
+    if let Some(p) = priority {
+        //let p = super::parse_priority(&priority_str);
         results.retain(|t| t.priority == p);
     }
 
-    if let Some(status_str) = status {
-        let s = super::parse_status(&status_str);
+    if let Some(s) = status {
+        //let s = super::parse_status(&status_str);
         results.retain(|t| t.status == s);
     }
 

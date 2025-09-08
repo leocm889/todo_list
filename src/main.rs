@@ -1,22 +1,26 @@
-use clap::Parser;
+use std::io;
+
+use clap::{CommandFactory, Parser};
+use clap_complete::{
+    generate,
+    shells::{Bash, Fish, PowerShell, Zsh},
+};
 mod cli;
 mod menu;
 mod priority;
+mod sortby;
 mod status;
 mod storage;
 mod todo;
 mod todo_cli;
-mod utils;
 use colored::*;
 use menu::display_menu;
 use uuid::Uuid;
 
-use crate::cli::{Cli, Commands};
+use crate::cli::{Cli, Commands, Shell};
 use crate::todo_cli::{
     add_todo_cli, delete_todo_cli, list_todos_cli, search_todo_cli, update_todo_cli,
 };
-use crate::utils::{parse_priority, parse_status};
-
 fn main() {
     let file_path = "todos.json";
     let cli = Cli::parse();
@@ -33,9 +37,6 @@ fn main() {
             priority,
             status,
         }) => {
-            let priority = parse_priority(&priority);
-            let status = parse_status(&status);
-
             add_todo_cli(file_path, title, description, priority, status);
         }
         Some(Commands::List { sort_by }) => {
@@ -57,8 +58,6 @@ fn main() {
             status,
         }) => {
             let id = Uuid::parse_str(&id).expect("❌ Invalid UUID".red().to_string().as_str());
-            let priority = priority.map(|p| parse_priority(&p));
-            let status = status.map(|s| parse_status(&s));
 
             if update_todo_cli(file_path, id, title, description, priority, status) {
                 println!("{}", "✅ Task updated successfully!".green().bold());
@@ -78,6 +77,15 @@ fn main() {
                     "{}",
                     format!("⚠️ No task found with id {id}").yellow().bold()
                 );
+            }
+        }
+        Some(Commands::Completions { shell }) => {
+            let mut cmd = Cli::command();
+            match shell {
+                Shell::Bash => generate(Bash, &mut cmd, "todo", &mut io::stdout()),
+                Shell::Zsh => generate(Zsh, &mut cmd, "todo", &mut io::stdout()),
+                Shell::Fish => generate(Fish, &mut cmd, "todo", &mut io::stdout()),
+                Shell::Powershell => generate(PowerShell, &mut cmd, "todo", &mut io::stdout()),
             }
         }
         None => {
