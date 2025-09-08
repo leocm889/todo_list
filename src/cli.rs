@@ -18,62 +18,74 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     Add {
-        #[arg(help = "Short title for your task")]
+        #[arg(short = 't', long, help = "Short title for your task")]
         title: String,
-        #[arg(help = "Optional longer description")]
+        #[arg(short = 'd', long, help = "Optional longer description")]
         description: String,
         #[arg(
+            short = 'p',
             long,
             default_value = "medium",
             value_enum,
-            help = "Set task priority (low, medium, high)"
+            help = "Set task priority"
         )]
         priority: Priority,
         #[arg(
+            short = 's',
             long,
             default_value = "pending",
             value_enum,
-            help = "Set initial status of the task (pending, inprogress, done)"
+            help = "Set initial status of the task"
         )]
         status: Status,
     },
     List {
         #[arg(
+            short = 's',
             long,
             default_value = "created",
             value_enum,
-            help = "Choose how to sort tasks (priority, status, created)"
+            help = "Choose how to sort tasks"
         )]
         sort_by: SortBy,
     },
     Search {
-        #[arg(long, help = "Find task by its unique ID")]
+        #[arg(short = 'i', long, help = "Find task by its unique ID")]
         id: Option<String>,
-        #[arg(long, help = "Find tasks by title (partial match allowed)")]
+        #[arg(
+            short = 't',
+            long,
+            help = "Find tasks by title (partial match allowed)"
+        )]
         title: Option<String>,
-        #[arg(long, value_enum, help = "Find tasks by priority")]
+        #[arg(short = 'p', long, value_enum, help = "Find tasks by priority")]
         priority: Option<Priority>,
-        #[arg(long, value_enum, help = "Find tasks by status")]
+        #[arg(short = 's', long, value_enum, help = "Find tasks by status")]
         status: Option<Status>,
     },
     Update {
-        #[arg(help = "UUID of the task you want to modify")]
+        #[arg(short = 'i', long, help = "UUID of the task you want to modify")]
         id: String,
-        #[arg(long, help = "Update the task title")]
+        #[arg(short = 't', long, help = "Update the task title")]
         title: Option<String>,
-        #[arg(long, help = "Update the task description")]
+        #[arg(short = 'd', long, help = "Update the task description")]
         description: Option<String>,
-        #[arg(long, value_enum, help = "Update the task priority")]
+        #[arg(short = 'p', long, value_enum, help = "Update the task priority")]
         priority: Option<Priority>,
-        #[arg(long, value_enum, help = "Update the task status")]
+        #[arg(short = 's', long, value_enum, help = "Update the task status")]
         status: Option<Status>,
     },
     Delete {
-        #[arg(help = "UUID of the task to remove")]
+        #[arg(short = 'i', long, help = "UUID of the task to remove")]
         id: String,
     },
     Completions {
-        #[arg(value_enum, help = "Choose the shell to generate completions for")]
+        #[arg(
+            short = 's',
+            long,
+            value_enum,
+            help = "Choose the shell to generate completions for"
+        )]
         shell: Shell,
     },
 }
