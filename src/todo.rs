@@ -3,10 +3,10 @@ use std::{
     io,
 };
 
-use crate::priority::Priority;
-use crate::status::Status;
 use crate::storage::{load_todos_from_file, save_todos_to_file};
-use chrono::{NaiveDateTime, Utc};
+use crate::{priority::Priority, recurrence::Recurrence};
+use crate::{recurrence, status::Status};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use colored::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -15,10 +15,15 @@ use uuid::Uuid;
 pub struct Todo {
     pub id: Uuid,
     pub title: String,
-    pub description: String,
+    pub description: Option<String>,
     pub priority: Priority,
     pub status: Status,
     pub created_at: NaiveDateTime,
+    pub due_date: Option<DateTime<Utc>>,
+    pub tags: Option<Vec<String>>,
+    pub parent_id: Option<Uuid>,
+    pub subtasks: Option<Vec<Uuid>>,
+    pub recurrence: Option<Recurrence>,
 }
 
 impl Display for Todo {
@@ -37,25 +42,67 @@ impl Display for Todo {
             "Done" => status_str.green(),
             _ => status_str.normal(),
         };
+        let recurrence_str = match &self.recurrence {
+            Some(r) => r.to_string(),
+            None => "None".to_string(),
+        };
+        let due_date_str = match &self.due_date {
+            Some(d) => d.to_rfc3339(),
+            None => "None".to_string(),
+        };
+        let tags_str = match &self.tags {
+            Some(tags) => tags.join(", "),
+            None => "None".to_string(),
+        };
+        let subtasks_str = match &self.subtasks {
+            Some(subs) if !subs.is_empty() => subs
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(", "),
+            _ => "None".to_string(),
+        };
         write!(
             f,
-            "{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n",
+            "{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n",
             "ID:".bold(),
             self.id.to_string().cyan(),
             "Title:".bold(),
             self.title.bold(),
             "Description:".bold(),
-            self.description,
+            self.description.as_deref().unwrap_or("None"),
             "Priority:".bold(),
             priority_color,
             "Status:".bold(),
             status_color,
+            "Due Date:".bold(),
+            due_date_str,
+            "Tags".bold(),
+            tags_str,
+            "Parent ID:".bold(),
+            self.parent_id
+                .map(|id| id.to_string())
+                .unwrap_or("None".to_string()),
+            "Subtasks:".bold(),
+            subtasks_str,
+            "Recurrence:".bold(),
+            recurrence_str.cyan(),
         )
     }
 }
 
 impl Todo {
-    pub fn new(title: String, description: String, priority: Priority, status: Status) -> Self {
+    pub fn new(
+        title: String,
+        description: Option<String>,
+        priority: Priority,
+        status: Status,
+        due_date: Option<DateTime<Utc>>,
+        tags: Option<Vec<String>>,
+        parent_id: Option<Uuid>,
+        subtasks: Option<Vec<Uuid>>,
+        recurrence: Option<Recurrence>,
+    ) -> Self {
         Self {
             id: Uuid::new_v4(),
             title,
@@ -63,6 +110,11 @@ impl Todo {
             priority,
             status,
             created_at: Utc::now().naive_utc(),
+            due_date,
+            tags,
+            parent_id,
+            subtasks,
+            recurrence,
         }
     }
 }
@@ -86,7 +138,7 @@ pub fn add_todo(file_path: &str) {
 
     println!("{}", "Enter description".blue().bold());
 
-    let description = read_input::<String>();
+    let description = read_optional_input::<String>();
 
     let priority = read_priority();
 
@@ -410,14 +462,64 @@ fn read_status() -> Status {
     }
 }
 
+pub fn read_recurrence() -> Option<Recurrence> {
+    loop {
+        println!(
+            "{}",
+            "Choose recurrence (or press Enter for none):".blue().bold()
+        );
+        println!("{}", "1. Daily".green());
+        println!("{}", "2. Weekly".yellow());
+        println!("{}", "3. Custom".magenta());
+
+        let choice = read_input::<u32>();
+        //let mut choice = String::new();
+        //
+        //io::stdin()
+        //    .read_line(&mut choice)
+        //    .expect("❌ Failed to read line");
+        //
+        //let choice: u32 = match choice.trim().parse() {
+        //    Ok(num) => num,
+        //    Err(_) => {
+        //        println!("{}", "⚠️ Please enter a valid number".yellow().bold());
+        //        continue;
+        //    }
+        //};
+
+        match choice {
+            1 => return Some(Recurrence::Daily),
+            2 => return Some(Recurrence::Weekly),
+            3 => return Some(Recurrence::Custom),
+            _ => {
+                println!("{}", "❌ Invalid choice, try again.".red().bold());
+                continue;
+            }
+        }
+    }
+}
+
+//pub fn read_u32() -> u32 {
+//    let mut input = String::new(),
+//}
+
 pub fn read_input<T: std::str::FromStr>() -> T {
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input).unwrap();
-    input
-        .trim()
-        .parse()
-        .ok()
-        .expect(&"Invalid input, try again".red().to_string())
+    loop {
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).unwrap();
+        let trimmed = input.trim();
+        match trimmed.parse::<T>() {
+            Ok(value) => return value,
+            Err(_) => {
+                println!("{}", "⚠️ Invalid input, try again".yellow().bold());
+            }
+        }
+    }
+    //input
+    //    .trim()
+    //    .parse()
+    //    .ok()
+    //    .expect(&"⚠️ Invalid input, try again".red().to_string())
 }
 
 pub fn read_optional_input<T: std::str::FromStr>() -> Option<T> {

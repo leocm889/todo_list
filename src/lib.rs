@@ -1,4 +1,5 @@
 pub mod priority;
+pub mod recurrence;
 pub mod status;
 pub mod storage;
 pub mod todo;

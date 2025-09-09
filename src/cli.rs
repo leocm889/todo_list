@@ -1,4 +1,4 @@
-use crate::{priority::Priority, sortby::SortBy, status::Status};
+use crate::{priority::Priority, recurrence::Recurrence, sortby::SortBy, status::Status};
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -38,6 +38,14 @@ pub enum Commands {
             help = "Set initial status of the task"
         )]
         status: Status,
+        #[arg(long, value_enum, help = "Optional recurrence")]
+        recurrence: Option<Recurrence>,
+        #[arg(
+            long,
+            value_enum,
+            help = "Custom recurrence rule (only used if --recurrence custom)"
+        )]
+        custom_rule: Option<String>,
     },
     List {
         #[arg(

@@ -8,6 +8,7 @@ use clap_complete::{
 mod cli;
 mod menu;
 mod priority;
+mod recurrence;
 mod sortby;
 mod status;
 mod storage;
