@@ -1,11 +1,10 @@
-use std::{
-    fmt::{Display, Formatter, Result},
-    io,
-};
+use std::fmt::{Display, Formatter, Result};
 
+use crate::input::AddTodoInput;
+use crate::status::Status;
 use crate::storage::{load_todos_from_file, save_todos_to_file};
+use crate::utils::{read_input, read_optional_input};
 use crate::{priority::Priority, recurrence::Recurrence};
-use crate::{recurrence, status::Status};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored::*;
 use serde::{Deserialize, Serialize};
@@ -62,8 +61,8 @@ impl Display for Todo {
                 .join(", "),
             _ => "None".to_string(),
         };
-        write!(
-            f,
+
+        let todo_block = format!(
             "{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n{} {}\n",
             "ID:".bold(),
             self.id.to_string().cyan(),
@@ -87,35 +86,40 @@ impl Display for Todo {
             subtasks_str,
             "Recurrence:".bold(),
             recurrence_str.cyan(),
-        )
+        );
+
+        if self.is_overdue() {
+            write!(
+                f,
+                "{}\n{}",
+                "⚠️ OVERDUE!".red().bold(),
+                todo_block.red().bold()
+            )
+        } else {
+            f.write_str(&todo_block)
+        }
     }
 }
 
 impl Todo {
-    pub fn new(
-        title: String,
-        description: Option<String>,
-        priority: Priority,
-        status: Status,
-        due_date: Option<DateTime<Utc>>,
-        tags: Option<Vec<String>>,
-        parent_id: Option<Uuid>,
-        subtasks: Option<Vec<Uuid>>,
-        recurrence: Option<Recurrence>,
-    ) -> Self {
+    pub fn new(input: AddTodoInput) -> Self {
         Self {
             id: Uuid::new_v4(),
-            title,
-            description,
-            priority,
-            status,
+            title: input.title,
+            description: input.description,
+            priority: input.priority,
+            status: input.status,
             created_at: Utc::now().naive_utc(),
-            due_date,
-            tags,
-            parent_id,
-            subtasks,
-            recurrence,
+            due_date: input.due_date,
+            tags: input.tags,
+            parent_id: input.parent_id,
+            subtasks: input.subtasks,
+            recurrence: input.recurrence,
         }
+    }
+
+    pub fn is_overdue(&self) -> bool {
+        self.due_date.map(|due| Utc::now() > due).unwrap_or(false)
     }
 }
 
@@ -144,7 +148,27 @@ pub fn add_todo(file_path: &str) {
 
     let status = read_status();
 
-    let todo = Todo::new(title, description, priority, status);
+    let due_date = read_optional_due_date();
+
+    let tags = read_optional_tags();
+
+    let parent_id = read_optional_uuid("Enter parent task ID (optional):");
+
+    let subtasks = read_optional_uuids("Enter subtasks IDs separated by commas (optional):");
+
+    let recurrence = read_recurrence(None);
+
+    let todo = Todo::new(AddTodoInput {
+        title,
+        description,
+        priority,
+        status,
+        due_date,
+        tags,
+        parent_id,
+        subtasks,
+        recurrence,
+    });
     todos.insert(todo.id, todo);
 
     save_todos_to_file(&todos, file_path);
@@ -165,23 +189,13 @@ pub fn retrieve_todos_sorted(file_path: &str) {
         println!("{}", "1. Priority".yellow());
         println!("{}", "2. Status".green());
         println!("{}", "3. Creation order".magenta());
-        println!("{}", "4. Back to main menu".red());
+        println!("{}", "4. Due date".cyan());
+        println!("{}", "5. Overdue tasks first".red());
+        println!("{}", "6. Back to main menu".red());
 
-        let mut choice = String::new();
+        let choice = read_input::<u32>();
 
         let mut todo_list: Vec<&Todo> = todos.values().collect();
-
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("❌ Failed to read line");
-
-        let choice: u32 = match choice.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-                continue;
-            }
-        };
 
         match choice {
             1 => {
@@ -193,7 +207,13 @@ pub fn retrieve_todos_sorted(file_path: &str) {
             3 => {
                 todo_list.sort_by_key(|t| t.created_at);
             }
-            4 => break,
+            4 => {
+                todo_list.sort_by_key(|t| (t.due_date.is_none(), t.due_date));
+            }
+            5 => {
+                todo_list.sort_by_key(|t| !t.is_overdue());
+            }
+            6 => break,
             _ => {
                 println!(
                     "{}",
@@ -263,21 +283,13 @@ pub fn search_menu(file_path: &str) {
         println!("{}", "2. Title".magenta());
         println!("{}", "3. Priority".yellow());
         println!("{}", "4. Status".green());
-        println!("{}", "5. Back to main menu".red());
+        println!("{}", "5. Due date".cyan());
+        println!("{}", "6. Recurrence".magenta());
+        println!("{}", "7. Tags".yellow());
+        println!("{}", "8. Parent task ID".green());
+        println!("{}", "9. Back to main menu".red());
 
-        let mut choice = String::new();
-
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("❌ Failed to read line");
-
-        let choice: u32 = match choice.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-                continue;
-            }
-        };
+        let choice = read_input::<u32>();
 
         match choice {
             1 => {
@@ -303,7 +315,43 @@ pub fn search_menu(file_path: &str) {
                 let status = read_status();
                 search_todo_by_status(file_path, status);
             }
-            5 => break,
+            5 => {
+                println!(
+                    "{}",
+                    "Enter due date to search (YYYY-MM-DD HH:MM):".blue().bold()
+                );
+                if let Some(due_date) = read_optional_due_date() {
+                    search_todos(file_path, move |t| {
+                        t.due_date.map(|d| d == due_date).unwrap_or(false)
+                    });
+                }
+            }
+            6 => {
+                println!(
+                    "{}",
+                    "Enter recurrence to search: (daily, weekly, or custom text)"
+                        .blue()
+                        .bold()
+                );
+                if let Some(rec) = read_optional_input::<Recurrence>() {
+                    search_todos(file_path, move |t| t.recurrence.as_ref() == Some(&rec));
+                }
+            }
+            7 => {
+                println!("{}", "Enter tag to search:".blue().bold());
+                if let Some(tag) = read_optional_input::<String>() {
+                    search_todos(file_path, move |t| {
+                        t.tags.as_ref().is_some_and(|tags| tags.contains(&tag))
+                    });
+                }
+            }
+            8 => {
+                println!("{}", "Enter parent task ID to search:".blue().bold());
+                if let Some(pid) = read_optional_input::<Uuid>() {
+                    search_todos(file_path, move |t| t.parent_id == Some(pid));
+                }
+            }
+            9 => break,
             _ => println!("{}", "❌ Invalid choice, try again.".red().bold()),
         }
     }
@@ -336,15 +384,13 @@ pub fn update_todo(file_path: &str) {
                 println!(
                     "{}",
                     format!(
-                        "Enter new description (or press Enter to keep '{}'):",
+                        "Enter new description (or press Enter to keep '{:?}'):",
                         todo.description
                     )
                     .blue()
                 );
-
-                let description = read_optional_input::<String>();
-                if let Some(description) = description {
-                    todo.description = description;
+                if let Some(desc) = read_optional_input::<String>() {
+                    todo.description = Some(desc);
                 }
 
                 println!("{}", "Do you want to update priority? (y/n)".blue());
@@ -357,6 +403,36 @@ pub fn update_todo(file_path: &str) {
                 let choice = read_input::<String>();
                 if choice.eq_ignore_ascii_case("y") {
                     todo.status = read_status();
+                }
+
+                println!("{}", "Do you want to update due date? (y/n)".blue());
+                if read_input::<String>().eq_ignore_ascii_case("y") {
+                    todo.due_date = read_optional_due_date();
+                }
+
+                println!("{}", "Do you want to update tags? (y/n)".blue());
+                if read_input::<String>().eq_ignore_ascii_case("y") {
+                    todo.tags = read_optional_tags();
+                }
+
+                println!("{}", "Do you want to update parent task? (y/n)".blue());
+                if read_input::<String>().eq_ignore_ascii_case("y") {
+                    todo.parent_id = read_optional_uuid(&format!(
+                        "Enter parent task ID (current: {:?}, press Enter to skip):",
+                        todo.parent_id
+                    ));
+                }
+
+                println!("{}", "Do you want to update recurrence? (y/n)".blue());
+                if read_input::<String>().eq_ignore_ascii_case("y") {
+                    todo.recurrence = read_recurrence(todo.recurrence.as_ref());
+                }
+
+                println!("{}", "Do you want to update subtasks? (y/n)".blue());
+                if read_input::<String>().eq_ignore_ascii_case("y") {
+                    todo.subtasks = read_optional_uuids(
+                        "Enter subtask IDs (comma separated, press enter to Skip):",
+                    );
                 }
 
                 save_todos_to_file(&todos, file_path);
@@ -403,19 +479,7 @@ fn read_priority() -> Priority {
         println!("{}", "2. Medium".yellow());
         println!("{}", "3. Low".green());
 
-        let mut choice = String::new();
-
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("❌ Failed to read line");
-
-        let choice: u32 = match choice.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-                continue;
-            }
-        };
+        let choice = read_input::<u32>();
 
         match choice {
             1 => return Priority::High,
@@ -436,19 +500,7 @@ fn read_status() -> Status {
         println!("{}", "2. In Progress".yellow());
         println!("{}", "3. Done".green());
 
-        let mut choice = String::new();
-
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("❌ Failed to read line");
-
-        let choice: u32 = match choice.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-                continue;
-            }
-        };
+        let choice = read_input::<u32>();
 
         match choice {
             1 => return Status::Pending,
@@ -462,73 +514,100 @@ fn read_status() -> Status {
     }
 }
 
-pub fn read_recurrence() -> Option<Recurrence> {
+pub fn read_recurrence(current: Option<&Recurrence>) -> Option<Recurrence> {
     loop {
-        println!(
-            "{}",
-            "Choose recurrence (or press Enter for none):".blue().bold()
-        );
+        let current_str = current
+            .map(|r| r.to_string())
+            .unwrap_or_else(|| "None".to_string());
+
+        let prompt = format!("Choose recurrence (current: {current_str} or press Enter to skip):");
+        println!("{}", prompt.blue().bold());
         println!("{}", "1. Daily".green());
         println!("{}", "2. Weekly".yellow());
         println!("{}", "3. Custom".magenta());
 
-        let choice = read_input::<u32>();
-        //let mut choice = String::new();
-        //
-        //io::stdin()
-        //    .read_line(&mut choice)
-        //    .expect("❌ Failed to read line");
-        //
-        //let choice: u32 = match choice.trim().parse() {
-        //    Ok(num) => num,
-        //    Err(_) => {
-        //        println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-        //        continue;
-        //    }
-        //};
-
-        match choice {
-            1 => return Some(Recurrence::Daily),
-            2 => return Some(Recurrence::Weekly),
-            3 => return Some(Recurrence::Custom),
-            _ => {
-                println!("{}", "❌ Invalid choice, try again.".red().bold());
-                continue;
+        if let Some(choice) = read_optional_input::<u32>() {
+            match choice {
+                1 => return Some(Recurrence::Daily),
+                2 => return Some(Recurrence::Weekly),
+                3 => {
+                    println!("{}", "Enter custom recurrence description".blue());
+                    if let Some(custom) = read_optional_input::<String>() {
+                        return Some(Recurrence::Custom(custom));
+                    } else {
+                        return None;
+                    }
+                }
+                _ => {
+                    println!("{}", "❌ Invalid choice, try again.".red().bold());
+                    continue;
+                }
             }
+        } else {
+            return current.cloned();
         }
     }
 }
 
-//pub fn read_u32() -> u32 {
-//    let mut input = String::new(),
-//}
-
-pub fn read_input<T: std::str::FromStr>() -> T {
-    loop {
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).unwrap();
-        let trimmed = input.trim();
-        match trimmed.parse::<T>() {
-            Ok(value) => return value,
-            Err(_) => {
-                println!("{}", "⚠️ Invalid input, try again".yellow().bold());
-            }
-        }
-    }
-    //input
-    //    .trim()
-    //    .parse()
-    //    .ok()
-    //    .expect(&"⚠️ Invalid input, try again".red().to_string())
-}
-
-pub fn read_optional_input<T: std::str::FromStr>() -> Option<T> {
+pub fn read_optional_due_date() -> Option<DateTime<Utc>> {
+    println!(
+        "{}",
+        "Enter due date (YYY-MM-DD HH:MM, press Enter to skip):"
+            .blue()
+            .bold()
+    );
     let mut input = String::new();
     std::io::stdin().read_line(&mut input).unwrap();
     let trimmed = input.trim();
+
     if trimmed.is_empty() {
         None
     } else {
-        trimmed.parse().ok()
+        match NaiveDateTime::parse_from_str(trimmed, "%Y-%m-%d %H: %M") {
+            Ok(ndt) => Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc)),
+            Err(_) => {
+                println!("{}", "⚠️ Invalid date format, skipping.".yellow());
+                None
+            }
+        }
+    }
+}
+
+pub fn read_optional_tags() -> Option<Vec<String>> {
+    println!(
+        "{}",
+        "Enter tags separated by commas (optional):".blue().bold()
+    );
+    if let Some(input) = read_optional_input::<String>() {
+        let tags: Vec<String> = input.split(',').map(|s| s.trim().to_string()).collect();
+        if tags.is_empty() {
+            None
+        } else {
+            Some(tags)
+        }
+    } else {
+        None
+    }
+}
+
+pub fn read_optional_uuid(prompt: &str) -> Option<Uuid> {
+    println!("{}", prompt.blue().bold());
+    read_optional_input::<Uuid>()
+}
+
+pub fn read_optional_uuids(prompt: &str) -> Option<Vec<Uuid>> {
+    println!("{}", prompt.blue().bold());
+    if let Some(input) = read_optional_input::<String>() {
+        let ids: Vec<Uuid> = input
+            .split(',')
+            .filter_map(|s| Uuid::parse_str(s.trim()).ok())
+            .collect();
+        if ids.is_empty() {
+            None
+        } else {
+            Some(ids)
+        }
+    } else {
+        None
     }
 }

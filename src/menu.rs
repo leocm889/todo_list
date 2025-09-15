@@ -1,6 +1,8 @@
-use crate::todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo};
+use crate::{
+    todo::{add_todo, delete_todo, retrieve_todos_sorted, search_menu, update_todo},
+    utils::read_input,
+};
 use colored::*;
-use std::io;
 
 pub fn display_menu(file_path: &str) {
     println!("{}", "🎉 Welcome to the To-Do list System!".bold().blue());
@@ -15,19 +17,7 @@ pub fn display_menu(file_path: &str) {
         println!("{}", "6. 🚪 Exit Program".white().bold());
         println!("{}", "👉 Enter choice:".bold());
 
-        let mut choice = String::new();
-
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("❌ Failed to read line");
-
-        let choice: u32 = match choice.trim().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("{}", "⚠️ Please enter a valid number".yellow().bold());
-                continue;
-            }
-        };
+        let choice = read_input::<u32>();
 
         match choice {
             1 => add_todo(file_path),

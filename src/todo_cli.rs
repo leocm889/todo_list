@@ -1,21 +1,15 @@
-use crate::priority::Priority;
+use crate::input::{AddTodoInput, SearchTodoInput, UpdateTodoInput};
 use crate::sortby::SortBy;
-use crate::status::Status;
 use crate::storage::{load_todos_from_file, save_todos_to_file};
 use crate::todo::Todo;
+use chrono::Utc;
 use colored::*;
 use uuid::Uuid;
 
-pub fn add_todo_cli(
-    file_path: &str,
-    title: String,
-    description: String,
-    priority: Priority,
-    status: Status,
-) {
+pub fn add_todo_cli(file_path: &str, todo_input: AddTodoInput) {
     let mut todos = load_todos_from_file(file_path);
 
-    let todo = Todo::new(title, description, priority, status);
+    let todo = Todo::new(todo_input);
 
     if todos.contains_key(&todo.id) {
         println!(
@@ -46,6 +40,15 @@ pub fn list_todos_cli(file_path: &str, sort_by: &SortBy) {
         SortBy::Priority => todo_list.sort_by_key(|t| t.priority),
         SortBy::Status => todo_list.sort_by_key(|t| t.status),
         SortBy::Created => todo_list.sort_by_key(|t| t.created_at),
+        SortBy::DueDate => todo_list.sort_by_key(|t| t.due_date),
+        SortBy::Overdue => {
+            let now = Utc::now();
+            todo_list.sort_by_key(|t| match t.due_date {
+                Some(due) if due < now => 0,
+                Some(_) => 1,
+                None => 2,
+            });
+        }
     }
 
     println!(
@@ -76,23 +79,52 @@ pub fn list_todos_cli(file_path: &str, sort_by: &SortBy) {
         println!("{:<10} {}", "Title:".bold(), todo.title.bold());
         println!("{:<10} {}", "Priority:".bold(), priority_color);
         println!("{:<10} {}", "Status:".bold(), status_color);
-        println!("{:<10} {}", "Description:".bold(), todo.description);
+        println!(
+            "{:<10} {}",
+            "Description:".bold(),
+            todo.description.as_deref().unwrap_or("None")
+        );
         println!("{:<10} {}", "Created:".bold(), todo.created_at);
+
+        if let Some(due) = todo.due_date {
+            let mut overdue_str = due.to_string();
+            overdue_str.push_str("⚠️ Overdue!");
+            if due < Utc::now() {
+                println!("{:<10} {}", "Due Date:".bold(), overdue_str.red());
+            } else {
+                println!("{:<10} {}", "Due Date:".bold(), due.to_string().yellow());
+            }
+        }
+
+        if let Some(tags) = &todo.tags {
+            println!("{:<10} {}", "Tags:".bold(), tags.join(", ").cyan());
+        }
+
+        if let Some(pid) = todo.parent_id {
+            println!("{:<10} {}", "Parent ID:".bold(), pid.to_string().blue());
+        }
+
+        if let Some(subs) = &todo.subtasks {
+            let subs_str: Vec<String> = subs.iter().map(|id| id.to_string()).collect();
+            println!(
+                "{:<10} {}",
+                "Subtasks:".bold(),
+                subs_str.join(", ").purple()
+            );
+        }
+
+        if let Some(rec) = &todo.recurrence {
+            println!("{:<10} {}", "Recurrence:".bold(), rec.to_string().yellow());
+        }
         println!();
     }
 }
 
-pub fn search_todo_cli(
-    file_path: &str,
-    id: Option<String>,
-    title: Option<String>,
-    priority: Option<Priority>,
-    status: Option<Status>,
-) {
+pub fn search_todo_cli(file_path: &str, todo_input: SearchTodoInput) {
     let todos = load_todos_from_file(file_path);
     let mut results: Vec<&Todo> = todos.values().collect();
 
-    if let Some(id_str) = id {
+    if let Some(id_str) = todo_input.id {
         if let Ok(uuid) = Uuid::parse_str(&id_str) {
             results.retain(|t| t.id == uuid);
         } else {
@@ -101,19 +133,41 @@ pub fn search_todo_cli(
         }
     }
 
-    if let Some(title_query) = title {
+    if let Some(title_query) = todo_input.title {
         let query_lower = title_query.to_lowercase();
         results.retain(|t| t.title.to_lowercase().contains(&query_lower));
     }
 
-    if let Some(p) = priority {
+    if let Some(p) = todo_input.priority {
         //let p = super::parse_priority(&priority_str);
         results.retain(|t| t.priority == p);
     }
 
-    if let Some(s) = status {
+    if let Some(s) = todo_input.status {
         //let s = super::parse_status(&status_str);
         results.retain(|t| t.status == s);
+    }
+
+    if let Some(due) = todo_input.due_date {
+        results.retain(|t| t.due_date == Some(due));
+    }
+
+    if let Some(rec) = todo_input.recurrence {
+        results.retain(|t| t.recurrence.as_ref() == Some(&rec));
+    }
+
+    if let Some(tag_lit) = todo_input.tags {
+        results.retain(|t| {
+            if let Some(todo_tags) = &t.tags {
+                tag_lit.iter().all(|tag| todo_tags.contains(tag))
+            } else {
+                false
+            }
+        });
+    }
+
+    if let Some(pid) = todo_input.parent_id {
+        results.retain(|t| t.parent_id == Some(pid));
     }
 
     if results.is_empty() {
@@ -143,35 +197,77 @@ pub fn search_todo_cli(
             println!("{:<10} {}", "Title:".bold(), todo.title.bold());
             println!("{:<10} {}", "Priority:".bold(), priority_color);
             println!("{:<10} {}", "Status:".bold(), status_color);
-            println!("{:<10} {}", "Description:".bold(), todo.description);
+            println!(
+                "{:<10} {}",
+                "Description:".bold(),
+                todo.description.as_deref().unwrap_or("None")
+            );
             println!("{:<10} {}", "Created:".bold(), todo.created_at);
+            if let Some(due) = todo.due_date {
+                let mut overdue_str = due.to_string();
+                overdue_str.push_str(" ⚠️ Overdue!");
+                if due < Utc::now() {
+                    println!("{:<10} {}", "Due Date:".bold(), overdue_str.red());
+                } else {
+                    println!("{:<10} {}", "Due Date:".bold(), due.to_string().yellow());
+                }
+            }
+
+            if let Some(tags) = &todo.tags {
+                println!("{:<10} {}", "Tags:".bold(), tags.join(", ").cyan());
+            }
+
+            if let Some(pid) = todo.parent_id {
+                println!("{:<10} {}", "Parent ID:".bold(), pid.to_string().blue());
+            }
+
+            if let Some(subs) = &todo.subtasks {
+                let subs_str: Vec<String> = subs.iter().map(|id| id.to_string()).collect();
+                println!(
+                    "{:<10} {}",
+                    "Subtasks:".bold(),
+                    subs_str.join(", ").purple()
+                );
+            }
+
+            if let Some(rec) = &todo.recurrence {
+                println!("{:<10} {}", "Recurrence:".bold(), rec.to_string().yellow());
+            }
             println!();
         }
     }
 }
 
-pub fn update_todo_cli(
-    file_path: &str,
-    id: Uuid,
-    new_title: Option<String>,
-    new_description: Option<String>,
-    new_priority: Option<Priority>,
-    new_status: Option<Status>,
-) -> bool {
+pub fn update_todo_cli(file_path: &str, todo_input: UpdateTodoInput) -> bool {
     let mut todos = load_todos_from_file(file_path);
 
-    if let Some(todo) = todos.get_mut(&id) {
-        if let Some(title) = new_title {
+    if let Some(todo) = todos.get_mut(&todo_input.id) {
+        if let Some(title) = todo_input.new_title {
             todo.title = title
         }
-        if let Some(desc) = new_description {
-            todo.description = desc
+        if let Some(desc) = todo_input.new_description {
+            todo.description = Some(desc)
         }
-        if let Some(p) = new_priority {
+        if let Some(p) = todo_input.new_priority {
             todo.priority = p;
         }
-        if let Some(s) = new_status {
+        if let Some(s) = todo_input.new_status {
             todo.status = s;
+        }
+        if let Some(d) = todo_input.new_due_date {
+            todo.due_date = Some(d);
+        }
+        if let Some(tags) = todo_input.new_tags {
+            todo.tags = Some(tags);
+        }
+        if let Some(rec) = todo_input.new_recurrence {
+            todo.recurrence = Some(rec);
+        }
+        if let Some(pid) = todo_input.new_parent_id {
+            todo.parent_id = Some(pid);
+        }
+        if let Some(subs) = todo_input.new_subtasks {
+            todo.subtasks = Some(subs);
         }
         save_todos_to_file(&todos, file_path);
         true

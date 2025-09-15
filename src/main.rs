@@ -1,11 +1,13 @@
 use std::io;
 
+use chrono::{DateTime, NaiveDate, TimeZone, Utc};
 use clap::{CommandFactory, Parser};
 use clap_complete::{
     generate,
     shells::{Bash, Fish, PowerShell, Zsh},
 };
 mod cli;
+mod input;
 mod menu;
 mod priority;
 mod recurrence;
@@ -14,14 +16,20 @@ mod status;
 mod storage;
 mod todo;
 mod todo_cli;
+mod utils;
 use colored::*;
 use menu::display_menu;
 use uuid::Uuid;
 
-use crate::cli::{Cli, Commands, Shell};
-use crate::todo_cli::{
-    add_todo_cli, delete_todo_cli, list_todos_cli, search_todo_cli, update_todo_cli,
+use crate::{
+    cli::{Cli, Commands, Shell},
+    input::UpdateTodoInput,
 };
+use crate::{
+    input::AddTodoInput,
+    todo_cli::{add_todo_cli, delete_todo_cli, list_todos_cli, search_todo_cli, update_todo_cli},
+};
+
 fn main() {
     let file_path = "todos.json";
     let cli = Cli::parse();
@@ -37,8 +45,46 @@ fn main() {
             description,
             priority,
             status,
+            due_date,
+            recurrence,
+            tags,
+            parent_id,
+            subtasks,
         }) => {
-            add_todo_cli(file_path, title, description, priority, status);
+            let due_date = due_date.map(|d| {
+                NaiveDate::parse_from_str(&d, "%Y-%m-%d")
+                    .map(|nd| Utc.from_utc_date(&nd).and_hms_opt(0, 0, 0).unwrap())
+                    .unwrap_or_else(|_| {
+                        panic!(
+                            "{}",
+                            format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
+                        )
+                    })
+            });
+
+            let parent_id =
+                parent_id.map(|pid| Uuid::parse_str(&pid).expect("❌ Invalid parent UUID"));
+
+            let subtasks = subtasks.map(|subs| {
+                subs.into_iter()
+                    .map(|s| Uuid::parse_str(&s).expect("❌ Invalid subtask UUID"))
+                    .collect()
+            });
+
+            add_todo_cli(
+                file_path,
+                AddTodoInput {
+                    title,
+                    description,
+                    priority,
+                    status,
+                    due_date,
+                    tags,
+                    recurrence,
+                    parent_id,
+                    subtasks,
+                },
+            );
         }
         Some(Commands::List { sort_by }) => {
             list_todos_cli(file_path, &sort_by);
@@ -48,8 +94,38 @@ fn main() {
             title,
             priority,
             status,
+            due_date,
+            recurrence,
+            tags,
+            parent_task_id,
         }) => {
-            search_todo_cli(file_path, id, title, priority, status);
+            let due_date = due_date.map(|d| {
+                NaiveDate::parse_from_str(&d, "%Y-%m-%d")
+                    .map(|nd| Utc.from_utc_date(&nd).and_hms_opt(0, 0, 0).unwrap())
+                    .unwrap_or_else(|_| {
+                        panic!(
+                            "{}",
+                            format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
+                        )
+                    })
+            });
+
+            let parent_id =
+                parent_task_id.map(|pid| Uuid::parse_str(&pid).expect("❌ Invalid parent UUID"));
+
+            search_todo_cli(
+                file_path,
+                input::SearchTodoInput {
+                    id,
+                    title,
+                    priority,
+                    status,
+                    due_date,
+                    recurrence,
+                    tags,
+                    parent_id,
+                },
+            );
         }
         Some(Commands::Update {
             id,
@@ -57,10 +133,68 @@ fn main() {
             description,
             priority,
             status,
+            due_date,
+            recurrence,
+            tags,
+            parent_task_id,
+            subtasks,
         }) => {
-            let id = Uuid::parse_str(&id).expect("❌ Invalid UUID".red().to_string().as_str());
+            let id = match Uuid::parse_str(&id) {
+                Ok(u) => u,
+                Err(_) => {
+                    eprintln!("{}", "❌ Invalid UUID".red());
+                    std::process::exit(1);
+                }
+            };
 
-            if update_todo_cli(file_path, id, title, description, priority, status) {
+            let due_date = due_date.map(|d| {
+                let nd = NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap_or_else(|_| {
+                    panic!(
+                        "{}",
+                        format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
+                    )
+                });
+                let ndt = nd
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap_or_else(|| panic!("{}", "❌  Invalid time components".red()));
+                DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc)
+            });
+
+            let parent_id =
+                parent_task_id.map(|pid| Uuid::parse_str(&pid).expect("❌ Invalid parent UUID"));
+
+            let parsed_subtasks = subtasks.map(|subs| {
+                subs.into_iter()
+                    .filter_map(|s| {
+                        Uuid::parse_str(&s)
+                            .inspect_err(|_| {
+                                eprintln!(
+                                    "{}",
+                                    format!("Invalid UUID format in subtasks: {s}")
+                                        .yellow()
+                                        .bold()
+                                );
+                            })
+                            .ok()
+                    })
+                    .collect::<Vec<Uuid>>()
+            });
+
+            if update_todo_cli(
+                file_path,
+                UpdateTodoInput {
+                    id,
+                    new_title: title,
+                    new_description: description,
+                    new_priority: priority,
+                    new_status: status,
+                    new_due_date: due_date,
+                    new_recurrence: recurrence,
+                    new_tags: tags,
+                    new_parent_id: parent_id,
+                    new_subtasks: parsed_subtasks,
+                },
+            ) {
                 println!("{}", "✅ Task updated successfully!".green().bold());
             } else {
                 println!(

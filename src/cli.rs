@@ -7,8 +7,9 @@ use clap::{Parser, Subcommand, ValueEnum};
     about = "A simple todo program with CLI or menu mode",
     long_about = "Manage your tasks via a command-line interface or interactive menu"
 )]
+
 pub struct Cli {
-    #[arg(long, help = "RUn in interactive menu mode")]
+    #[arg(long, help = "Run in interactive menu mode")]
     pub menu: bool,
 
     #[command(subcommand)]
@@ -21,7 +22,8 @@ pub enum Commands {
         #[arg(short = 't', long, help = "Short title for your task")]
         title: String,
         #[arg(short = 'd', long, help = "Optional longer description")]
-        description: String,
+        description: Option<String>,
+
         #[arg(
             short = 'p',
             long,
@@ -38,14 +40,26 @@ pub enum Commands {
             help = "Set initial status of the task"
         )]
         status: Status,
-        #[arg(long, value_enum, help = "Optional recurrence")]
+        #[arg(short = 'D', long, help = "Optional due date (format: YYY-MM-DD)")]
+        due_date: Option<String>,
+        #[arg(short = 'r', long, value_enum, help = "Optional recurrence")]
         recurrence: Option<Recurrence>,
         #[arg(
+            short = 'g',
             long,
-            value_enum,
-            help = "Custom recurrence rule (only used if --recurrence custom)"
+            value_delimiter = ',',
+            help = "Tags for the task (comma-separated)"
         )]
-        custom_rule: Option<String>,
+        tags: Option<Vec<String>>,
+        #[arg(short = 'P', long, help = "Parent task UUID (for the subtasks)")]
+        parent_id: Option<String>,
+        #[arg(
+            short = 'u',
+            long,
+            value_delimiter = ',',
+            help = "Subtasks for this task (comma-separated)"
+        )]
+        subtasks: Option<Vec<String>>,
     },
     List {
         #[arg(
@@ -70,7 +84,16 @@ pub enum Commands {
         priority: Option<Priority>,
         #[arg(short = 's', long, value_enum, help = "Find tasks by status")]
         status: Option<Status>,
+        #[arg(short = 'D', long, help = "Find tasks by due date (format: YYY-MM-DD)")]
+        due_date: Option<String>,
+        #[arg(short = 'r', long, help = "Find tasks by recurrence")]
+        recurrence: Option<Recurrence>,
+        #[arg(short = 'g', long, value_delimiter = ',', help = "FInd tasks by tags")]
+        tags: Option<Vec<String>>,
+        #[arg(short = 'P', long, help = "Find tasks by parent task UUID")]
+        parent_task_id: Option<String>,
     },
+
     Update {
         #[arg(short = 'i', long, help = "UUID of the task you want to modify")]
         id: String,
@@ -82,6 +105,21 @@ pub enum Commands {
         priority: Option<Priority>,
         #[arg(short = 's', long, value_enum, help = "Update the task status")]
         status: Option<Status>,
+        #[arg(short = 'D', long, help = "Find tasks by due date (format: YYY-MM-DD")]
+        due_date: Option<String>,
+        #[arg(short = 'r', long, value_enum, help = "Update the recurrence")]
+        recurrence: Option<Recurrence>,
+        #[arg(short = 'g', long, value_delimiter = ',', help = "Update tags")]
+        tags: Option<Vec<String>>,
+        #[arg(short = 'P', long, help = "Update parent task UUID")]
+        parent_task_id: Option<String>,
+        #[arg(
+            short = 'u',
+            long,
+            value_delimiter = ',',
+            help = "Update subtasks for this task (comma-separated)"
+        )]
+        subtasks: Option<Vec<String>>,
     },
     Delete {
         #[arg(short = 'i', long, help = "UUID of the task to remove")]

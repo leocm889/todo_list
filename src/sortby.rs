@@ -6,6 +6,8 @@ pub enum SortBy {
     Priority,
     Status,
     Created,
+    DueDate,
+    Overdue,
 }
 
 impl fmt::Display for SortBy {
@@ -13,7 +15,9 @@ impl fmt::Display for SortBy {
         let label = match self {
             SortBy::Priority => "Priority",
             SortBy::Status => "Status",
-            SortBy::Created => "Created",
+            SortBy::Created => "Created Date",
+            SortBy::DueDate => "Due Date",
+            SortBy::Overdue => "Overdue",
         };
         write!(f, "{label}")
     }

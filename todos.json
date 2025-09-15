@@ -5,31 +5,12 @@
     "description": "Edit video about morning routine for maximum productivity",
     "priority": "High",
     "status": "InProgress",
-    "created_at": "2025-08-30T12:34:39.761503235"
-  },
-  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
-    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
-    "title": "Sell to client course",
-    "description": "sell to my client the course on how to build an aesthetic physique",
-    "priority": "Medium",
-    "status": "Pending",
-    "created_at": "2025-08-30T12:23:59.981678080"
-  },
-  "632eb08f-be4b-4550-a345-0f9cda860615": {
-    "id": "632eb08f-be4b-4550-a345-0f9cda860615",
-    "title": "Study Go",
-    "description": "Read the Go book",
-    "priority": "High",
-    "status": "Pending",
-    "created_at": "2025-09-03T12:58:03.529514352"
-  },
-  "b066d130-60b8-4b37-8b13-c1d3e5b5057e": {
-    "id": "b066d130-60b8-4b37-8b13-c1d3e5b5057e",
-    "title": "Cook",
-    "description": "Cook pasta to my family",
-    "priority": "High",
-    "status": "Done",
-    "created_at": "2025-09-07T19:35:35.164969130"
+    "created_at": "2025-08-30T12:34:39.761503235",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
   },
   "56c97e37-03b8-45e4-8a7c-12f0d9765524": {
     "id": "56c97e37-03b8-45e4-8a7c-12f0d9765524",
@@ -37,6 +18,83 @@
     "description": "from the store",
     "priority": "High",
     "status": "Pending",
-    "created_at": "2025-09-04T08:45:24.301993058"
+    "created_at": "2025-09-04T08:45:24.301993058",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "d5f8ca38-5c08-40d9-a37b-eca9556b6fe8": {
+    "id": "d5f8ca38-5c08-40d9-a37b-eca9556b6fe8",
+    "title": "go to meeting",
+    "description": "have a deep conversation with a partner",
+    "priority": "High",
+    "status": "Pending",
+    "created_at": "2025-09-13T19:52:28.885109587",
+    "due_date": "2025-09-15T00:00:00Z",
+    "tags": [
+      "relationships"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": {
+      "Custom": "just once for now"
+    }
+  },
+  "b066d130-60b8-4b37-8b13-c1d3e5b5057e": {
+    "id": "b066d130-60b8-4b37-8b13-c1d3e5b5057e",
+    "title": "Cook",
+    "description": "Cook pasta to my family",
+    "priority": "High",
+    "status": "Done",
+    "created_at": "2025-09-07T19:35:35.164969130",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "632eb08f-be4b-4550-a345-0f9cda860615": {
+    "id": "632eb08f-be4b-4550-a345-0f9cda860615",
+    "title": "Study Go",
+    "description": "Read the Go book",
+    "priority": "High",
+    "status": "Pending",
+    "created_at": "2025-09-03T12:58:03.529514352",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
+    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
+    "title": "Sell to client course",
+    "description": "sell to my client the course on how to build an aesthetic physique",
+    "priority": "Medium",
+    "status": "Pending",
+    "created_at": "2025-08-30T12:23:59.981678080",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "670443f6-e078-4b69-ae17-899d57e25663": {
+    "id": "670443f6-e078-4b69-ae17-899d57e25663",
+    "title": "Clean my room",
+    "description": "i have to clean my room cuz i stink XD",
+    "priority": "High",
+    "status": "InProgress",
+    "created_at": "2025-09-15T08:21:16.693943207",
+    "due_date": null,
+    "tags": [
+      "cleaning",
+      "hygine"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": "Weekly"
   }
 }
