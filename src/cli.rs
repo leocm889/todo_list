@@ -134,6 +134,7 @@ pub enum Commands {
         )]
         shell: Shell,
     },
+    Notify,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

@@ -76,7 +76,7 @@ impl Display for Todo {
             status_color,
             "Due Date:".bold(),
             due_date_str,
-            "Tags".bold(),
+            "Tags:".bold(),
             tags_str,
             "Parent ID:".bold(),
             self.parent_id

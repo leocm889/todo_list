@@ -1,6 +1,6 @@
 use std::io;
 
-use chrono::{DateTime, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use clap::{CommandFactory, Parser};
 use clap_complete::{
     generate,
@@ -9,6 +9,7 @@ use clap_complete::{
 mod cli;
 mod input;
 mod menu;
+mod notify;
 mod priority;
 mod recurrence;
 mod sortby;
@@ -52,14 +53,16 @@ fn main() {
             subtasks,
         }) => {
             let due_date = due_date.map(|d| {
-                NaiveDate::parse_from_str(&d, "%Y-%m-%d")
-                    .map(|nd| Utc.from_utc_date(&nd).and_hms_opt(0, 0, 0).unwrap())
-                    .unwrap_or_else(|_| {
-                        panic!(
-                            "{}",
-                            format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
-                        )
-                    })
+                let nd = NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap_or_else(|_| {
+                    panic!(
+                        "{}",
+                        format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
+                    )
+                });
+                let ndt = nd
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap_or_else(|| panic!("{}", "❌  Invalid time components".red()));
+                DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc)
             });
 
             let parent_id =
@@ -100,14 +103,16 @@ fn main() {
             parent_task_id,
         }) => {
             let due_date = due_date.map(|d| {
-                NaiveDate::parse_from_str(&d, "%Y-%m-%d")
-                    .map(|nd| Utc.from_utc_date(&nd).and_hms_opt(0, 0, 0).unwrap())
-                    .unwrap_or_else(|_| {
-                        panic!(
-                            "{}",
-                            format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
-                        )
-                    })
+                let nd = NaiveDate::parse_from_str(&d, "%Y-%m-%d").unwrap_or_else(|_| {
+                    panic!(
+                        "{}",
+                        format!("❌ Invalid date format: {d} (expected YYY-MM-DD)").red()
+                    )
+                });
+                let ndt = nd
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap_or_else(|| panic!("{}", "❌  Invalid time components".red()));
+                DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc)
             });
 
             let parent_id =
@@ -222,6 +227,13 @@ fn main() {
                 Shell::Fish => generate(Fish, &mut cmd, "todo", &mut io::stdout()),
                 Shell::Powershell => generate(PowerShell, &mut cmd, "todo", &mut io::stdout()),
             }
+        }
+        Some(Commands::Notify) => {
+            notify::send_due_notifications(file_path);
+            println!(
+                "{}",
+                "🔔 Notifications dispatched for due tasks".green().bold()
+            );
         }
         None => {
             println!(
