@@ -196,16 +196,6 @@ src/
 
 ---
 
-## 📌 TODOs / Future Improvements
-
-- Background notifier/daemon mode
-- Support for multiple storage backends (SQLite, PostgreSQL)
-- Export todos as CSV/Markdown
-- More advanced search/filtering
-- Colored output for better readability
-
----
-
 ## ✍️ Author
 
 - leocm889
