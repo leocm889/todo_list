@@ -1,26 +1,22 @@
 # 📝 Todo CLI
 
 A simple "Todo List Manager" written in Rust.
-Supports both an **interactive menu** and a **command-line interface (CLI)**.
+Supports **interactive mode** and **command-line mode** for maximum flexibility.
 
 ---
 
 ## ✨ Features
 
-- Add, list, update, search, and delete todos
+- Add, view, update, search, and delete todos
 - Store todos in a JSON file (`todos.json`)
 - Interactive menu mode (`--menu`) for guided use
-- CLI for quick commands
-- Desktop notifications for due/overdue tasks (`todo notify`)
+- Command-line interface (CLI) for quick commands
 - Todos have:
   - Unique ID (UUID)
-  - Title & optional description
-  - Priority: High | Medium | Low
-  - Status: Pending | In Progress | Done
-  - Creation timestamp
-  - Optional due date (UTC) and tags
-  - Optional recurrence: Daily | Weekly | Custom("...")
-  - Optional parent/subtasks relationships
+  - Title & description
+  - Priority (High, Medium, Low)
+  - Status (Pending, In Progress, Done)
+  - Creation timestap
 
 ---
 
@@ -34,8 +30,8 @@ cd todo_list
 cargo install --path .
 ```
 
-This will install the binary to `~/.cargo/bin/todo`.
-Make sure `~/.cargo/bin` is in your `$PATH`.
+This will install the binary to `~/.cargo/bin/todo`
+Make sure `~/.cargo/bin` is in your `$PATH`
 
 --- 
 
@@ -69,18 +65,13 @@ Use direct commands without the menu:
 **Add a todo**
 
 ```bash
-# Flags for add:
-# -t/--title (required), -d/--description, -p/--priority, -s/--status,
-# -D/--due-date (YYYY-MM-DD), -r/--recurrence, -g/--tags, -P/--parent-id, -u/--subtasks
-
-todo add -t "Buy milk" -d "From the store" -p high -s pending -D 2025-09-20 -g groceries,errands
+todo add "Buy milk" "From the store" --priority high --status pending
 ```
 
 **View todos**
 
 ```bash
-# --sort-by created|priority|status|due-date|overdue (default: created)
-todo list --sort-by due-date
+todo list
 ```
 
 **Search by title**
@@ -107,40 +98,17 @@ todo search --priority high
 todo search --status done
 ```
 
-**Search by due date**
-
-```bash
-todo search --due-date 2025-09-20
-```
-
-**Search by tags (comma separated)**
-
-```bash
-todo search --tags work,urgent
-```
-
 **Update a todo**
 
 ```bash
-# Update uses flags like add, but all are optional except --id
-todo update --id <UUID> -t "Buy bread" -s in_progress -D 2025-09-21
+todo update <UUID> -- title "Buy bread" --status in_progress
 ```
 
 **Delete a todo**
 
 ```bash
-todo delete --id <UUID>
+todo delete <UUID>
 ```
-
-**Send desktop notifications**
-
-```bash
-# Shows notifications for tasks due now or overdue
-todo notify
-```
-
-Notes:
-- On Linux, ensure a notification daemon is running (e.g., GNOME/KDE notifier, dunst).
 
 ---
 
@@ -148,20 +116,17 @@ Notes:
 
 ```bash
 src/
-├── main.rs       # CLI entry point (clap) and command dispatch, handles --menu
-├── lib.rs        # Library exports and helpers used by tests
-├── cli.rs        # Clap command definitions
-├── input.rs      # DTOs for CLI to core (Add/Update/Search input structs)
-├── menu.rs       # Interactive menu UI (stdin-driven)
-├── todo.rs       # Todo model + Display + interactive helpers
-├── todo_cli.rs   # Non-interactive CLI handlers (add/list/search/update/delete)
-├── storage.rs    # JSON persistence (load/save)
-├── notify.rs     # Desktop notifications for due/overdue tasks
-├── priority.rs   # Priority enum + Display
-├── status.rs     # Status enum + Display
-├── recurrence.rs # Recurrence enum + Display/FromStr (Daily/Weekly/Custom)
-├── utils.rs      # Input helpers
-└── tests/        # Integration tests
+├── main.rs         # CLI entry point -> parses args (clap) and dispatches. Handles --menu flag.
+├── lib.rs          # Core library: re-exports + pure logic for tests and shared behavior.
+├── cli.rs          # CLI helpers and CLI parsing helpers (optional: move clap config here)
+├── menu.rs         # Interactive menu UI; uses interactive functions or calls todo_cli wrappers.
+├── todo.rs         # Todo struct + interactive (stdin-based) versions of functions (used by menu).
+├── todo_cli.rs     # Non-interactive CLI wrappers (add_todo_cli, update_todo_cli, delete_todo_cli).
+├── storage.rs      # Persistence layer: load/save JSON from/to disk.
+├── priority.rs     # Priority enum + (optionally) FromStr impl
+├── status.rs       # Status enum + (optionally) FromStr impl
+├── utils.rs        # small helpers (read_input, read_optional_input, validation helpers)
+└── tests/          # integration or unit tests (or you can keep tests inside lib.rs)
 ```
 
 ---
@@ -176,12 +141,7 @@ src/
     "description": "From the supermarket",
     "priority": "High",
     "status": "Pending",
-    "created_at": "2025-09-04T12:34:56",
-    "due_date": "2025-09-20T00:00:00Z",
-    "tags": ["groceries", "errands"],
-    "recurrence": null,
-    "parent_id": null,
-    "subtasks": []
+    "created_at": "2025-09-04T12:34:56"
   },
   "e1c2a3f4-1d2e-4c5b-8f6a-7d8c9b0e1234": {
     "id": "e1c2a3f4-1d2e-4c5b-8f6a-7d8c9b0e1234",
@@ -193,6 +153,20 @@ src/
   }
 }
 ```
+
+---
+
+## 📌 TODOs / Future Improvements
+
+- Add due dates & reminders
+
+- Support for multiple storage backends (SQLite, PostgreSQL)
+
+- Export todos as CSV/Markdown
+
+- More advanced search/filtering
+
+- Colored output for better readability
 
 ---
 

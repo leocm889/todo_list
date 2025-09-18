@@ -5,7 +5,7 @@ use crate::status::Status;
 use crate::storage::{load_todos_from_file, save_todos_to_file};
 use crate::utils::{read_input, read_optional_input};
 use crate::{priority::Priority, recurrence::Recurrence};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
 use colored::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -552,7 +552,7 @@ pub fn read_recurrence(current: Option<&Recurrence>) -> Option<Recurrence> {
 pub fn read_optional_due_date() -> Option<DateTime<Utc>> {
     println!(
         "{}",
-        "Enter due date (YYY-MM-DD HH:MM, press Enter to skip):"
+        "Enter due date (YYY-MM-DD, press Enter to skip):"
             .blue()
             .bold()
     );
@@ -563,8 +563,14 @@ pub fn read_optional_due_date() -> Option<DateTime<Utc>> {
     if trimmed.is_empty() {
         None
     } else {
-        match NaiveDateTime::parse_from_str(trimmed, "%Y-%m-%d %H: %M") {
-            Ok(ndt) => Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc)),
+        match NaiveDate::parse_from_str(trimmed, "%Y-%m-%d") {
+            Ok(nd) => {
+                // Default time to 00:00
+                let ndt = nd
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap_or_else(|| panic!("{}", "❌  Invalid time components".red()));
+                Some(DateTime::<Utc>::from_naive_utc_and_offset(ndt, Utc))
+            }
             Err(_) => {
                 println!("{}", "⚠️ Invalid date format, skipping.".yellow());
                 None

@@ -1,4 +1,33 @@
 {
+  "632eb08f-be4b-4550-a345-0f9cda860615": {
+    "id": "632eb08f-be4b-4550-a345-0f9cda860615",
+    "title": "Study Go",
+    "description": "Read the Go book",
+    "priority": "High",
+    "status": "Pending",
+    "created_at": "2025-09-03T12:58:03.529514352",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "670443f6-e078-4b69-ae17-899d57e25663": {
+    "id": "670443f6-e078-4b69-ae17-899d57e25663",
+    "title": "Clean my room",
+    "description": "i have to clean my room cuz i stink XD",
+    "priority": "High",
+    "status": "InProgress",
+    "created_at": "2025-09-15T08:21:16.693943207",
+    "due_date": null,
+    "tags": [
+      "cleaning",
+      "hygine"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": "Weekly"
+  },
   "b066d130-60b8-4b37-8b13-c1d3e5b5057e": {
     "id": "b066d130-60b8-4b37-8b13-c1d3e5b5057e",
     "title": "Cook",
@@ -6,6 +35,47 @@
     "priority": "High",
     "status": "Done",
     "created_at": "2025-09-07T19:35:35.164969130",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "11911d05-50d0-46d3-a7a6-a13ab455ad1b": {
+    "id": "11911d05-50d0-46d3-a7a6-a13ab455ad1b",
+    "title": "Edit video",
+    "description": "Edit video about morning routine for maximum productivity",
+    "priority": "High",
+    "status": "InProgress",
+    "created_at": "2025-08-30T12:34:39.761503235",
+    "due_date": null,
+    "tags": null,
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": null
+  },
+  "94c241a0-ad00-471f-bfa6-f73d5697c5da": {
+    "id": "94c241a0-ad00-471f-bfa6-f73d5697c5da",
+    "title": "Wash dishes",
+    "description": "At home",
+    "priority": "High",
+    "status": "Pending",
+    "created_at": "2025-09-18T12:36:49.776756547",
+    "due_date": "2025-09-18T00:00:00Z",
+    "tags": [
+      "chores"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": "Daily"
+  },
+  "56c97e37-03b8-45e4-8a7c-12f0d9765524": {
+    "id": "56c97e37-03b8-45e4-8a7c-12f0d9765524",
+    "title": "Buy milk",
+    "description": "from the store",
+    "priority": "High",
+    "status": "Pending",
+    "created_at": "2025-09-04T08:45:24.301993058",
     "due_date": null,
     "tags": null,
     "parent_id": null,
@@ -29,76 +99,6 @@
       "Custom": "\"every thirty days\""
     }
   },
-  "632eb08f-be4b-4550-a345-0f9cda860615": {
-    "id": "632eb08f-be4b-4550-a345-0f9cda860615",
-    "title": "Study Go",
-    "description": "Read the Go book",
-    "priority": "High",
-    "status": "Pending",
-    "created_at": "2025-09-03T12:58:03.529514352",
-    "due_date": null,
-    "tags": null,
-    "parent_id": null,
-    "subtasks": null,
-    "recurrence": null
-  },
-  "fb69a0b1-ce0c-4b58-be55-59946ac991aa": {
-    "id": "fb69a0b1-ce0c-4b58-be55-59946ac991aa",
-    "title": "help mom",
-    "description": "house chores",
-    "priority": "Medium",
-    "status": "InProgress",
-    "created_at": "2025-09-16T12:45:18.128221957",
-    "due_date": "2025-09-16T08:46:00Z",
-    "tags": [
-      "chores"
-    ],
-    "parent_id": null,
-    "subtasks": null,
-    "recurrence": "Weekly"
-  },
-  "11911d05-50d0-46d3-a7a6-a13ab455ad1b": {
-    "id": "11911d05-50d0-46d3-a7a6-a13ab455ad1b",
-    "title": "Edit video",
-    "description": "Edit video about morning routine for maximum productivity",
-    "priority": "High",
-    "status": "InProgress",
-    "created_at": "2025-08-30T12:34:39.761503235",
-    "due_date": null,
-    "tags": null,
-    "parent_id": null,
-    "subtasks": null,
-    "recurrence": null
-  },
-  "670443f6-e078-4b69-ae17-899d57e25663": {
-    "id": "670443f6-e078-4b69-ae17-899d57e25663",
-    "title": "Clean my room",
-    "description": "i have to clean my room cuz i stink XD",
-    "priority": "High",
-    "status": "InProgress",
-    "created_at": "2025-09-15T08:21:16.693943207",
-    "due_date": null,
-    "tags": [
-      "cleaning",
-      "hygine"
-    ],
-    "parent_id": null,
-    "subtasks": null,
-    "recurrence": "Weekly"
-  },
-  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
-    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
-    "title": "Sell to client course",
-    "description": "sell to my client the course on how to build an aesthetic physique",
-    "priority": "Medium",
-    "status": "Pending",
-    "created_at": "2025-08-30T12:23:59.981678080",
-    "due_date": null,
-    "tags": null,
-    "parent_id": null,
-    "subtasks": null,
-    "recurrence": null
-  },
   "d5f8ca38-5c08-40d9-a37b-eca9556b6fe8": {
     "id": "d5f8ca38-5c08-40d9-a37b-eca9556b6fe8",
     "title": "go to meeting",
@@ -116,13 +116,45 @@
       "Custom": "just once for now"
     }
   },
-  "56c97e37-03b8-45e4-8a7c-12f0d9765524": {
-    "id": "56c97e37-03b8-45e4-8a7c-12f0d9765524",
-    "title": "Buy milk",
-    "description": "from the store",
-    "priority": "High",
+  "7d813460-cee2-401c-bfcb-ab1bf8fd5d8f": {
+    "id": "7d813460-cee2-401c-bfcb-ab1bf8fd5d8f",
+    "title": "Buy watch",
+    "description": "from casio store",
+    "priority": "Low",
     "status": "Pending",
-    "created_at": "2025-09-04T08:45:24.301993058",
+    "created_at": "2025-09-18T12:34:11.455256493",
+    "due_date": "2025-09-20T18:30:00Z",
+    "tags": [
+      "fashion"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": {
+      "Custom": "just once"
+    }
+  },
+  "fb69a0b1-ce0c-4b58-be55-59946ac991aa": {
+    "id": "fb69a0b1-ce0c-4b58-be55-59946ac991aa",
+    "title": "help mom",
+    "description": "house chores",
+    "priority": "Medium",
+    "status": "InProgress",
+    "created_at": "2025-09-16T12:45:18.128221957",
+    "due_date": "2025-09-16T08:46:00Z",
+    "tags": [
+      "chores"
+    ],
+    "parent_id": null,
+    "subtasks": null,
+    "recurrence": "Weekly"
+  },
+  "dd1dc7a6-d0af-4458-af06-8ec031fb0e75": {
+    "id": "dd1dc7a6-d0af-4458-af06-8ec031fb0e75",
+    "title": "Sell to client course",
+    "description": "sell to my client the course on how to build an aesthetic physique",
+    "priority": "Medium",
+    "status": "Pending",
+    "created_at": "2025-08-30T12:23:59.981678080",
     "due_date": null,
     "tags": null,
     "parent_id": null,
